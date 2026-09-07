@@ -4,77 +4,241 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Playman Summer Games</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #1e272e; color: white; text-align: center; font-family: sans-serif; }
-        .controls { display: flex; justify-content: space-around; position: fixed; bottom: 30px; width: 100%; }
-        .btn { width: 42%; height: 90px; font-size: 22px; font-weight: bold; background: #ff3838; color: white; border: none; border-radius: 15px; }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-header {
+            padding: 10px;
+            background: #222;
+            border-bottom: 2px solid #444;
+        }
+
+        .hud-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 4px 0;
+        }
+
+        /* Schermo di gioco in Pixel Art */
+        #gameCanvas {
+            display: block;
+            margin: 15px auto;
+            background: #27ae60;
+            border: 4px solid #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            max-width: 95vw;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-around;
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+        }
+
+        .btn {
+            width: 44%;
+            height: 90px;
+            font-size: 26px;
+            font-weight: bold;
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            color: white;
+            border: 3px solid #fff;
+            border-radius: 15px;
+            box-shadow: 0 6px #7f8c8d;
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px #7f8c8d;
+            background: #a93226;
+        }
     </style>
 </head>
 <body>
 
-<div id="game"></div>
+    <div id="game-header">
+        <div class="hud-text" id="status" style="color: #f1c40f;">PREMI I TASTI PER PARTIRE!</div>
+        <div class="hud-text" id="timer">TEMPO: 0.00s</div>
+    </div>
 
-<div class="controls">
-    <button id="btn-sx" class="btn">SX 👈</button>
-    <button id="btn-dx" class="btn">👉 DX</button>
-</div>
+    <!-- Canvas per la grafica di gioco -->
+    <canvas id="gameCanvas" width="360" height="200"></canvas>
 
-<script>
-const config = {
-    type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight * 0.6,
-    parent: 'game',
-    scene: { create: create, update: update }
-};
+    <div class="controls">
+        <button class="btn" id="btnSX">👈 SX</button>
+        <button class="btn" id="btnDX">DX 👉</button>
+    </div>
 
-let player, speed = 0, lastKey = "", distance = 0, isFinished = false, timer = 0;
-let timerText, statusText;
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('canvas') ? canvas.getContext('2d') : canvas.getContext('2d');
 
-const game = new Phaser.Game(config);
+        // Disabilita lo smoothing per un effetto Pixel Art nitido
+        ctx.imageSmoothingEnabled = false;
 
-function create() {
-    player = this.add.rectangle(50, config.height / 2, 40, 50, 0x00d2d3);
-    this.add.rectangle(config.width / 2, config.height / 2 + 30, config.width, 5, 0xffffff);
+        let distance = 0;
+        let speed = 0;
+        let lastKey = '';
+        let timer = 0;
+        let running = false;
+        let finished = false;
+        let animFrame = 0;
+        let totalDistance = 500; // Lunghezza gara
 
-    timerText = this.add.text(20, 20, 'Tempo: 0.00s', { fontSize: '20px', fill: '#fff' });
-    statusText = this.add.text(20, 50, 'Alterna SX e DX per correre!', { fontSize: '16px', fill: '#ffdd59' });
+        const statusText = document.getElementById('status');
+        const timerText = document.getElementById('timer');
 
-    document.getElementById('btn-sx').addEventListener('touchstart', (e) => { e.preventDefault(); press('SX'); });
-    document.getElementById('btn-dx').addEventListener('touchstart', (e) => { e.preventDefault(); press('DX'); });
-}
+        // Loop Grafico (disegna 60 volte al secondo)
+        let lastTime = performance.now();
+        function gameLoop(currentTime) {
+            let delta = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
 
-function press(key) {
-    if (isFinished) return;
-    if (key !== lastKey) {
-        speed = Math.min(350, speed + 50);
-        lastKey = key;
-        statusText.setText("Ottimo ritmo!");
-    } else {
-        speed = Math.max(0, speed - 70);
-        statusText.setText("RITMO ERRATO! (Stesso tasto)");
-    }
-}
+            if (running && !finished) {
+                timer += delta;
+                timerText.innerText = 'TEMPO: ' + timer.toFixed(2) + 's';
 
-function update(time, delta) {
-    if (isFinished) return;
+                // Attrito
+                speed = Math.max(0, speed - (60 * delta));
+                distance += speed * delta;
 
-    if (speed > 0) {
-        timer += delta / 1000;
-        timerText.setText('Tempo: ' + timer.toFixed(2) + 's');
-        speed = Math.max(0, speed - (120 * (delta / 1000)));
-        distance += speed * (delta / 1000);
-        
-        player.x = 50 + (distance % (config.width - 100));
+                // Avanzamento animazione corsa in base alla velocità
+                animFrame += speed * delta * 0.2;
 
-        if (distance >= 800) {
-            isFinished = true;
-            statusText.setText("ARRIVO! Tempo finale: " + timer.toFixed(2) + "s");
+                if (distance >= totalDistance) {
+                    finished = true;
+                    statusText.innerText = 'ARRIVO! ' + timer.toFixed(2) + 's';
+                    statusText.style.color = '#2ecc71';
+                }
+            }
+
+            drawScene();
+            requestAnimationFrame(gameLoop);
         }
-    }
-}
-</script>
 
+        function drawScene() {
+            // 1. Sfondo Erba
+            ctx.fillStyle = '#27ae60';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Pista d'atletica (Rossa)
+            ctx.fillStyle = '#d35400';
+            ctx.fillRect(0, 50, canvas.width, 100);
+
+            // Linee bianche corsia
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 50, canvas.width, 3);
+            ctx.fillRect(0, 98, canvas.width, 4); // Linea centrale
+            ctx.fillRect(0, 147, canvas.width, 3);
+
+            // Righe di sfondo che scorrono (effetto movimento)
+            ctx.fillStyle = '#e67e22';
+            let scrollX = (distance * 2) % 40;
+            for (let x = -scrollX; x < canvas.width; x += 40) {
+                ctx.fillRect(x, 53, 20, 45);
+                ctx.fillRect(x + 20, 102, 20, 45);
+            }
+
+            // 3. Traguardo (Scacchi bianchi e neri)
+            let finishX = canvas.width - 40 - ((totalDistance - distance) * 0.5);
+            if (finishX > 0 && finishX < canvas.width) {
+                for (let y = 50; y < 150; y += 10) {
+                    ctx.fillStyle = ((y / 10) % 2 === 0) ? '#ffffff' : '#000000';
+                    ctx.fillRect(finishX, y, 10, 10);
+                }
+            }
+
+            // 4. Disegno Atleta in Pixel Art (Playman)
+            drawPlayer(60, 75);
+        }
+
+        function drawPlayer(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            let frame = Math.floor(animFrame) % 4;
+
+            // Testa (Biondo/Playman)
+            ctx.fillStyle = '#f1c40f'; // Capelli biondi
+            ctx.fillRect(0, 0, 12, 10);
+            ctx.fillStyle = '#ffdbac'; // Pelle
+            ctx.fillRect(2, 4, 8, 8);
+
+            // Maglietta (Rossa)
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(0, 12, 12, 14);
+
+            // Pantaloncini (Blu)
+            ctx.fillStyle = '#2980b9';
+            ctx.fillRect(0, 26, 12, 8);
+
+            // Gambe (Animazione Corsa)
+            ctx.fillStyle = '#ffdbac';
+            if (speed > 5) {
+                if (frame === 0) {
+                    ctx.fillRect(-4, 34, 6, 12);  // Gamba SX indietro
+                    ctx.fillRect(10, 34, 6, 10);  // Gamba DX avanti
+                } else if (frame === 1) {
+                    ctx.fillRect(0, 34, 6, 14);   // Gambe incrociate
+                    ctx.fillRect(6, 34, 6, 8);
+                } else if (frame === 2) {
+                    ctx.fillRect(10, 34, 6, 12);  // Gamba DX indietro
+                    ctx.fillRect(-4, 34, 6, 10);  // Gamba SX avanti
+                } else {
+                    ctx.fillRect(6, 34, 6, 14);
+                    ctx.fillRect(0, 34, 6, 8);
+                }
+            } else {
+                // In piedi fermo
+                ctx.fillRect(1, 34, 4, 14);
+                ctx.fillRect(7, 34, 4, 14);
+            }
+
+            ctx.restore();
+        }
+
+        // Pressione Tasti
+        function press(key) {
+            if (finished) return;
+
+            if (!running) {
+                running = true;
+                statusText.innerText = 'CORRI!';
+                statusText.style.color = '#2ecc71';
+            }
+
+            if (key !== lastKey) {
+                speed = Math.min(180, speed + 28); // Spinta
+                lastKey = key;
+                statusText.innerText = 'OTTIMO RITMO!';
+                statusText.style.color = '#2ecc71';
+            } else {
+                speed = Math.max(0, speed - 35); // Penalità
+                statusText.innerText = 'RITMO ERRATO!';
+                statusText.style.color = '#e74c3c';
+            }
+        }
+
+        document.getElementById('btnSX').addEventListener('touchstart', (e) => { e.preventDefault(); press('SX'); });
+        document.getElementById('btnDX').addEventListener('touchstart', (e) => { e.preventDefault(); press('DX'); });
+        document.getElementById('btnSX').addEventListener('click', () => press('SX'));
+        document.getElementById('btnDX').addEventListener('click', () => press('DX'));
+
+        // Avvio Gioco
+        requestAnimationFrame(gameLoop);
+    </script>
 </body>
 </html>
