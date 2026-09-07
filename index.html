@@ -10,7 +10,7 @@
             padding: 0;
             background-color: #111;
             color: white;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: sans-serif;
             text-align: center;
             overflow: hidden;
             user-select: none;
@@ -28,14 +28,12 @@
             margin: 4px 0;
         }
 
-        /* Schermo di gioco in Pixel Art */
         #gameCanvas {
             display: block;
             margin: 15px auto;
             background: #27ae60;
-            border: 4px solid #fff;
+            border: 3px solid #fff;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             max-width: 95vw;
         }
 
@@ -49,32 +47,28 @@
 
         .btn {
             width: 44%;
-            height: 90px;
-            font-size: 26px;
+            height: 85px;
+            font-size: 24px;
             font-weight: bold;
-            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            background: #e74c3c;
             color: white;
             border: 3px solid #fff;
             border-radius: 15px;
-            box-shadow: 0 6px #7f8c8d;
             touch-action: manipulation;
         }
 
         .btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px #7f8c8d;
-            background: #a93226;
+            background: #c0392b;
         }
     </style>
 </head>
 <body>
 
     <div id="game-header">
-        <div class="hud-text" id="status" style="color: #f1c40f;">PREMI I TASTI PER PARTIRE!</div>
+        <div class="hud-text" id="status" style="color: #f1c40f;">ALTERNA SX E DX PER CORRERE!</div>
         <div class="hud-text" id="timer">TEMPO: 0.00s</div>
     </div>
 
-    <!-- Canvas per la grafica di gioco -->
     <canvas id="gameCanvas" width="360" height="200"></canvas>
 
     <div class="controls">
@@ -84,10 +78,7 @@
 
     <script>
         const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('canvas') ? canvas.getContext('2d') : canvas.getContext('2d');
-
-        // Disabilita lo smoothing per un effetto Pixel Art nitido
-        ctx.imageSmoothingEnabled = false;
+        const ctx = canvas.getContext('2d');
 
         let distance = 0;
         let speed = 0;
@@ -96,12 +87,11 @@
         let running = false;
         let finished = false;
         let animFrame = 0;
-        let totalDistance = 500; // Lunghezza gara
+        let totalDistance = 400; // Lunghezza percorso
 
         const statusText = document.getElementById('status');
         const timerText = document.getElementById('timer');
 
-        // Loop Grafico (disegna 60 volte al secondo)
         let lastTime = performance.now();
         function gameLoop(currentTime) {
             let delta = (currentTime - lastTime) / 1000;
@@ -114,8 +104,6 @@
                 // Attrito
                 speed = Math.max(0, speed - (60 * delta));
                 distance += speed * delta;
-
-                // Avanzamento animazione corsa in base alla velocità
                 animFrame += speed * delta * 0.2;
 
                 if (distance >= totalDistance) {
@@ -130,21 +118,21 @@
         }
 
         function drawScene() {
-            // 1. Sfondo Erba
+            // Sfondo Erba
             ctx.fillStyle = '#27ae60';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 2. Pista d'atletica (Rossa)
+            // Pista d'atletica Rossa
             ctx.fillStyle = '#d35400';
             ctx.fillRect(0, 50, canvas.width, 100);
 
-            // Linee bianche corsia
+            // Corsie bianche
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 50, canvas.width, 3);
-            ctx.fillRect(0, 98, canvas.width, 4); // Linea centrale
+            ctx.fillRect(0, 98, canvas.width, 4);
             ctx.fillRect(0, 147, canvas.width, 3);
 
-            // Righe di sfondo che scorrono (effetto movimento)
+            // Righe di movimento sulla pista
             ctx.fillStyle = '#e67e22';
             let scrollX = (distance * 2) % 40;
             for (let x = -scrollX; x < canvas.width; x += 40) {
@@ -152,8 +140,8 @@
                 ctx.fillRect(x + 20, 102, 20, 45);
             }
 
-            // 3. Traguardo (Scacchi bianchi e neri)
-            let finishX = canvas.width - 40 - ((totalDistance - distance) * 0.5);
+            // Traguardo
+            let finishX = canvas.width - 40 - ((totalDistance - distance) * 0.8);
             if (finishX > 0 && finishX < canvas.width) {
                 for (let y = 50; y < 150; y += 10) {
                     ctx.fillStyle = ((y / 10) % 2 === 0) ? '#ffffff' : '#000000';
@@ -161,7 +149,7 @@
                 }
             }
 
-            // 4. Disegno Atleta in Pixel Art (Playman)
+            // Disegno Atleta (Playman)
             drawPlayer(60, 75);
         }
 
@@ -171,38 +159,37 @@
 
             let frame = Math.floor(animFrame) % 4;
 
-            // Testa (Biondo/Playman)
-            ctx.fillStyle = '#f1c40f'; // Capelli biondi
+            // Testa bionda (Playman)
+            ctx.fillStyle = '#f1c40f';
             ctx.fillRect(0, 0, 12, 10);
-            ctx.fillStyle = '#ffdbac'; // Pelle
+            ctx.fillStyle = '#ffdbac';
             ctx.fillRect(2, 4, 8, 8);
 
-            // Maglietta (Rossa)
+            // Maglietta Rossa
             ctx.fillStyle = '#e74c3c';
             ctx.fillRect(0, 12, 12, 14);
 
-            // Pantaloncini (Blu)
+            // Pantaloncini Blu
             ctx.fillStyle = '#2980b9';
             ctx.fillRect(0, 26, 12, 8);
 
-            // Gambe (Animazione Corsa)
+            // Gambe (Animazione)
             ctx.fillStyle = '#ffdbac';
             if (speed > 5) {
                 if (frame === 0) {
-                    ctx.fillRect(-4, 34, 6, 12);  // Gamba SX indietro
-                    ctx.fillRect(10, 34, 6, 10);  // Gamba DX avanti
+                    ctx.fillRect(-4, 34, 6, 12);
+                    ctx.fillRect(10, 34, 6, 10);
                 } else if (frame === 1) {
-                    ctx.fillRect(0, 34, 6, 14);   // Gambe incrociate
+                    ctx.fillRect(0, 34, 6, 14);
                     ctx.fillRect(6, 34, 6, 8);
                 } else if (frame === 2) {
-                    ctx.fillRect(10, 34, 6, 12);  // Gamba DX indietro
-                    ctx.fillRect(-4, 34, 6, 10);  // Gamba SX avanti
+                    ctx.fillRect(10, 34, 6, 12);
+                    ctx.fillRect(-4, 34, 6, 10);
                 } else {
                     ctx.fillRect(6, 34, 6, 14);
                     ctx.fillRect(0, 34, 6, 8);
                 }
             } else {
-                // In piedi fermo
                 ctx.fillRect(1, 34, 4, 14);
                 ctx.fillRect(7, 34, 4, 14);
             }
@@ -210,7 +197,6 @@
             ctx.restore();
         }
 
-        // Pressione Tasti
         function press(key) {
             if (finished) return;
 
@@ -221,12 +207,12 @@
             }
 
             if (key !== lastKey) {
-                speed = Math.min(180, speed + 28); // Spinta
+                speed = Math.min(180, speed + 28);
                 lastKey = key;
                 statusText.innerText = 'OTTIMO RITMO!';
                 statusText.style.color = '#2ecc71';
             } else {
-                speed = Math.max(0, speed - 35); // Penalità
+                speed = Math.max(0, speed - 35);
                 statusText.innerText = 'RITMO ERRATO!';
                 statusText.style.color = '#e74c3c';
             }
@@ -237,7 +223,6 @@
         document.getElementById('btnSX').addEventListener('click', () => press('SX'));
         document.getElementById('btnDX').addEventListener('click', () => press('DX'));
 
-        // Avvio Gioco
         requestAnimationFrame(gameLoop);
     </script>
 </body>
