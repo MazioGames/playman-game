@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Playman Summer Games</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <style>
+        body { margin: 0; background: #1e272e; color: white; text-align: center; font-family: sans-serif; }
+        .controls { display: flex; justify-content: space-around; position: fixed; bottom: 30px; width: 100%; }
+        .btn { width: 42%; height: 90px; font-size: 22px; font-weight: bold; background: #ff3838; color: white; border: none; border-radius: 15px; }
+    </style>
+</head>
+<body>
+
+<div id="game"></div>
+
+<div class="controls">
+    <button id="btn-sx" class="btn">SX 👈</button>
+    <button id="btn-dx" class="btn">👉 DX</button>
+</div>
+
+<script>
+const config = {
+    type: Phaser.AUTO,
+    width: window.innerWidth,
+    height: window.innerHeight * 0.6,
+    parent: 'game',
+    scene: { create: create, update: update }
+};
+
+let player, speed = 0, lastKey = "", distance = 0, isFinished = false, timer = 0;
+let timerText, statusText;
+
+const game = new Phaser.Game(config);
+
+function create() {
+    player = this.add.rectangle(50, config.height / 2, 40, 50, 0x00d2d3);
+    this.add.rectangle(config.width / 2, config.height / 2 + 30, config.width, 5, 0xffffff);
+
+    timerText = this.add.text(20, 20, 'Tempo: 0.00s', { fontSize: '20px', fill: '#fff' });
+    statusText = this.add.text(20, 50, 'Alterna SX e DX per correre!', { fontSize: '16px', fill: '#ffdd59' });
+
+    document.getElementById('btn-sx').addEventListener('touchstart', (e) => { e.preventDefault(); press('SX'); });
+    document.getElementById('btn-dx').addEventListener('touchstart', (e) => { e.preventDefault(); press('DX'); });
+}
+
+function press(key) {
+    if (isFinished) return;
+    if (key !== lastKey) {
+        speed = Math.min(350, speed + 50);
+        lastKey = key;
+        statusText.setText("Ottimo ritmo!");
+    } else {
+        speed = Math.max(0, speed - 70);
+        statusText.setText("RITMO ERRATO! (Stesso tasto)");
+    }
+}
+
+function update(time, delta) {
+    if (isFinished) return;
+
+    if (speed > 0) {
+        timer += delta / 1000;
+        timerText.setText('Tempo: ' + timer.toFixed(2) + 's');
+        speed = Math.max(0, speed - (120 * (delta / 1000)));
+        distance += speed * (delta / 1000);
+        
+        player.x = 50 + (distance % (config.width - 100));
+
+        if (distance >= 800) {
+            isFinished = true;
+            statusText.setText("ARRIVO! Tempo finale: " + timer.toFixed(2) + "s");
+        }
+    }
+}
+</script>
+
+</body>
+</html>
