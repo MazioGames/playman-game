@@ -2,184 +2,228 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Playman Summer Games 3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Playman Summer Games</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-        body {
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
             margin: 0;
             padding: 0;
-            background-color: #000;
+            width: 100%;
+            height: 100%;
+            background-color: #0d0f12;
             color: white;
             font-family: 'Press Start 2P', monospace;
-            text-align: center;
             overflow: hidden;
             user-select: none;
         }
 
-        /* MENU PRINCIPALE */
+        /* Contenitore Principale Fullscreen */
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* MENU E OVERLAY RETRÒ */
         #menu-overlay {
-            position: fixed;
+            position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(180deg, #1e3799, #0c2461);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 10;
+            z-index: 30;
         }
 
         h1 {
-            color: #ffffff;
-            font-size: 20px;
-            margin-bottom: 5px;
-            text-shadow: 3px 3px #e74c3c;
-            font-style: italic;
+            color: #f6b93b;
+            font-size: 24px;
+            margin: 0 0 5px 0;
+            text-shadow: 3px 3px #b71540;
         }
 
         .subtitle {
-            color: #f1c40f;
+            color: #78e08f;
             font-size: 10px;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
         }
 
         input[type="text"] {
-            padding: 10px;
+            padding: 8px;
             font-family: 'Press Start 2P', monospace;
             font-size: 11px;
             border-radius: 4px;
-            border: 3px solid #e74c3c;
+            border: 3px solid #f6b93b;
             text-align: center;
-            width: 70%;
-            max-width: 220px;
-            background: #fff;
-            color: #000;
-            margin-bottom: 20px;
+            width: 60%;
+            max-width: 200px;
+            background: #0c2461;
+            color: #fff;
+            margin-bottom: 12px;
         }
 
         .menu-btn {
-            padding: 15px;
+            padding: 12px;
             font-family: 'Press Start 2P', monospace;
             font-size: 11px;
-            background: #e74c3c;
+            background: #e55039;
             color: white;
             border: 3px solid #fff;
             border-radius: 8px;
-            box-shadow: 0 4px #c0392b;
-            margin: 8px;
-            width: 80%;
-            max-width: 250px;
+            box-shadow: 0 4px #b71540;
+            margin: 5px;
+            width: 70%;
+            max-width: 220px;
             touch-action: manipulation;
         }
 
         .menu-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 1px #c0392b;
+            transform: translateY(2px);
+            box-shadow: 0 1px #b71540;
         }
 
         .high-score-box {
-            margin-top: 15px;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #f1c40f;
-            font-size: 9px;
-            color: #f1c40f;
-            line-height: 1.6;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px dashed #f6b93b;
+            font-size: 8px;
+            color: #f6b93b;
+            line-height: 1.5;
         }
 
-        /* CANVAS AREA */
+        /* HUD GIOCO SUPERIORE */
+        #game-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 6px 15px;
+            background: rgba(12, 36, 97, 0.85);
+            border-bottom: 2px solid #f6b93b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .hud-text {
+            font-size: 10px;
+        }
+
+        /* CANVAS FLUIDO RISPETTO ALLO SCHERMO */
         #gameCanvas {
             display: block;
-            margin: 0 auto;
-            background: #000;
-            border-bottom: 3px solid #444;
-            max-width: 100vw;
-            height: auto;
+            width: 100vw;
+            height: 100vh;
             image-rendering: pixelated;
         }
 
-        /* CONTROLLI DI GIOCO */
-        .controls {
-            display: flex;
-            justify-content: space-around;
-            position: fixed;
-            bottom: 12px;
-            width: 100%;
-        }
-
-        .btn {
-            width: 44%;
-            height: 75px;
+        /* TASTI TOUCH LATERALI PER POLLICI */
+        .touch-btn {
+            position: absolute;
+            bottom: 15px;
+            width: 120px;
+            height: 80px;
             font-family: 'Press Start 2P', monospace;
-            font-size: 16px;
-            background: linear-gradient(180deg, #3498db, #2980b9);
+            font-size: 14px;
+            background: linear-gradient(180deg, rgba(250, 152, 58, 0.8), rgba(229, 80, 57, 0.8));
             color: white;
             border: 3px solid #fff;
-            border-radius: 12px;
-            box-shadow: 0 5px #1a5276;
+            border-radius: 15px;
+            box-shadow: 0 4px #b71540;
             touch-action: manipulation;
+            z-index: 15;
         }
 
-        .btn:active {
+        #btnSX { left: 20px; }
+        #btnDX { right: 20px; }
+
+        .touch-btn:active {
             transform: translateY(3px);
-            box-shadow: 0 2px #1a5276;
+            background: rgba(229, 80, 57, 0.95);
         }
 
-        /* FINISH MODAL */
+        /* FINISH POPUP */
         #end-game-modal {
             display: none;
-            position: fixed;
+            position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            background: #2c3e50;
-            border: 4px solid #e74c3c;
-            padding: 20px;
+            background: #0c2461;
+            border: 4px solid #f6b93b;
+            padding: 15px;
             border-radius: 12px;
-            z-index: 20;
-            width: 80%;
+            z-index: 25;
+            width: 70%;
             max-width: 280px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <!-- MENU PRINCIPALE -->
-    <div id="menu-overlay">
-        <h1>PLAYMAN</h1>
-        <div class="subtitle">SUMMER GAMES 3</div>
+    <div id="game-container">
+        <!-- MENU PRINCIPALE -->
+        <div id="menu-overlay">
+            <h1>PLAYMAN</h1>
+            <div class="subtitle">SUMMER GAMES</div>
 
-        <input type="text" id="playerName" placeholder="NOME" maxlength="8" value="MAZIO">
+            <input type="text" id="playerName" placeholder="NOME" maxlength="8" value="PLAYMAN">
 
-        <button class="menu-btn" onclick="startGame()">🏃 100M SPRINT</button>
+            <button class="menu-btn" onclick="startGame()">🏃 100M SPRINT</button>
 
-        <div class="high-score-box">
-            BEST RECORD:<br>
-            <span id="recordDisplay">--.--s</span>
+            <div class="high-score-box">
+                BEST RECORD:<br>
+                <span id="recordDisplay">--.--s</span>
+            </div>
         </div>
-    </div>
 
-    <!-- CANVAS DI GIOCO -->
-    <canvas id="gameCanvas" width="320" height="320"></canvas>
+        <!-- HUD -->
+        <div id="game-header">
+            <div class="hud-text" id="status" style="color: #f6b93b;">ALTERNA SX E DX!</div>
+            <div class="hud-text" id="timer">TEMPO: 0.00s</div>
+        </div>
 
-    <!-- TASTI DI GIOCO -->
-    <div class="controls">
-        <button class="btn" id="btnSX">◀ 4</button>
-        <button class="btn" id="btnDX">6 ▶</button>
-    </div>
+        <!-- CANVAS Fullscreen -->
+        <canvas id="gameCanvas"></canvas>
 
-    <!-- FINISH MODAL -->
-    <div id="end-game-modal">
-        <h2 id="endTitle" style="color: #2ecc71; font-size: 13px; margin-top:0;">GARA FINITA!</h2>
-        <p id="endDetails" style="font-size: 9px; line-height: 1.6;"></p>
-        <button class="menu-btn" style="width:100%; margin:5px 0;" onclick="restartGame()">RIGIOCA</button>
-        <button class="menu-btn" style="width:100%; margin:5px 0; background:#7f8c8d;" onclick="showMenu()">MENU</button>
+        <!-- CONTROLLI AI LATI DELLO SCHERMO -->
+        <button class="touch-btn" id="btnSX">👈 SX</button>
+        <button class="touch-btn" id="btnDX">DX 👉</button>
+
+        <!-- POPUP FINISH -->
+        <div id="end-game-modal">
+            <h2 id="endTitle" style="color: #78e08f; font-size: 12px; margin-top:0;">GARA FINITA!</h2>
+            <p id="endDetails" style="font-size: 9px; line-height: 1.5;"></p>
+            <button class="menu-btn" style="width:100%; margin:4px 0;" onclick="restartGame()">RIGIOCA</button>
+            <button class="menu-btn" style="width:100%; margin:4px 0; background:#6a89cc;" onclick="showMenu()">MENU</button>
+        </div>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
         let distance = 0;
         let speed = 0;
@@ -188,16 +232,20 @@
         let running = false;
         let finished = false;
         let animFrame = 0;
-        let totalDistance = 500;
+        let totalDistance = 600;
 
-        // Rivale BOT
-        let botDist = 0;
-        let botSpeed = 105;
+        // BOT Avversari
+        let bot1Speed = 110;
+        let bot2Speed = 100;
+        let bot1Dist = 0;
+        let bot2Dist = 0;
 
-        let playerName = "MAZIO";
+        let playerName = "PLAYMAN";
         let bestRecord = localStorage.getItem('playman_best') ? parseFloat(localStorage.getItem('playman_best')) : null;
         let bestPlayer = localStorage.getItem('playman_player') || "";
 
+        const statusText = document.getElementById('status');
+        const timerText = document.getElementById('timer');
         const recordDisplay = document.getElementById('recordDisplay');
 
         function updateRecordDisplay() {
@@ -238,8 +286,13 @@
             running = false;
             finished = false;
             animFrame = 0;
-            botDist = 0;
-            botSpeed = 95 + Math.random() * 20;
+            bot1Dist = 0;
+            bot2Dist = 0;
+            bot1Speed = 110 + Math.random() * 15;
+            bot2Speed = 100 + Math.random() * 20;
+            statusText.innerText = "PRONTI... VIA!";
+            statusText.style.color = "#f6b93b";
+            timerText.innerText = "TEMPO: 0.00s";
         }
 
         let lastTime = performance.now();
@@ -249,12 +302,14 @@
 
             if (running && !finished) {
                 timer += delta;
+                timerText.innerText = 'TEMPO: ' + timer.toFixed(2) + 's';
 
                 speed = Math.max(0, speed - (55 * delta));
                 distance += speed * delta;
                 animFrame += speed * delta * 0.18;
 
-                botDist += botSpeed * delta;
+                bot1Dist += bot1Speed * delta;
+                bot2Dist += bot2Speed * delta;
 
                 if (distance >= totalDistance) {
                     finished = true;
@@ -279,7 +334,7 @@
             }
 
             document.getElementById('endTitle').innerText = isNewRecord ? "🏆 NUOVO RECORD!" : "GARA FINITA!";
-            document.getElementById('endTitle').style.color = isNewRecord ? "#f1c40f" : "#2ecc71";
+            document.getElementById('endTitle').style.color = isNewRecord ? "#f6b93b" : "#78e08f";
             document.getElementById('endDetails').innerText = `${playerName}\nTEMPO: ${finalTime}s`;
             document.getElementById('end-game-modal').style.display = 'block';
         }
@@ -287,135 +342,76 @@
         function drawScene() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. CROWD / SPALTI SULLO SFONDO
-            ctx.fillStyle = '#bdc3c7';
-            ctx.fillRect(0, 0, canvas.width, 25);
-            for (let x = 0; x < canvas.width; x += 8) {
-                let colors = ['#e74c3c', '#f1c40f', '#3498db', '#2ecc71', '#34495e'];
-                ctx.fillStyle = colors[(x + Math.floor(animFrame * 2)) % colors.length];
-                ctx.fillRect(x + 2, 4, 5, 8);
-                ctx.fillStyle = '#ffdd59';
-                ctx.fillRect(x + 2, 12, 5, 5);
-            }
-
-            // 2. ERBA VERDE (CAMPON)
-            ctx.fillStyle = '#a3cb38';
-            ctx.fillRect(0, 25, canvas.width, 70);
-
-            // 3. CARTELLONI SPONSOR REALARCADE
-            let adScroll = (distance * 1.2) % 240;
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 85, canvas.width, 18);
+            // 1. SPALTI E PUBBLICO
+            let crowdHeight = canvas.height * 0.22;
             ctx.fillStyle = '#1e3799';
-            ctx.fillRect(0, 85, canvas.width, 2);
+            ctx.fillRect(0, 0, canvas.width, crowdHeight);
 
-            for (let adX = -adScroll; adX < canvas.width; adX += 240) {
-                // Banner RealArcade
-                ctx.fillStyle = '#0984e3';
-                ctx.fillRect(adX + 10, 88, 90, 12);
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '7px sans-serif';
-                ctx.fillText("RealArcade", adX + 15, 97);
-
-                // Banner zylom.com
-                ctx.fillStyle = '#f1c40f';
-                ctx.fillRect(adX + 115, 88, 100, 12);
-                ctx.fillStyle = '#000000';
-                ctx.fillText("www.zylom.com", adX + 120, 97);
+            for (let x = 0; x < canvas.width; x += 10) {
+                for (let y = 10; y < crowdHeight - 10; y += 10) {
+                    let colors = ['#f6b93b', '#e55039', '#ffffff', '#78e08f', '#4a69bd'];
+                    ctx.fillStyle = colors[(x + y + Math.floor(animFrame)) % colors.length];
+                    ctx.fillRect(x, y, 6, 6);
+                }
             }
 
-            // 4. PISTA D'ATLETICA BLU CON PERSPECTIVE INCLINATA
-            ctx.fillStyle = '#4b6584'; // Bordo pista
-            ctx.fillRect(0, 103, canvas.width, 5);
-
-            ctx.fillStyle = '#2b580c'; // Sfondo erba bassa
-            ctx.fillStyle = '#3c6382'; // Pista Blu Base
-            ctx.fillRect(0, 108, canvas.width, 212);
-
-            // Tonalità blu alternata per le corsie
-            let laneY = [108, 140, 175, 215, 260];
-            for (let i = 0; i < laneY.length - 1; i++) {
-                ctx.fillStyle = (i % 2 === 0) ? '#3c6382' : '#0a3d62';
-                ctx.fillRect(0, laneY[i], canvas.width, laneY[i+1] - laneY[i]);
-            }
-
-            // Corsie in Diagonale prospettica
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            let stripeOffset = (distance * 2) % 40;
-
-            for (let lane of laneY) {
-                ctx.beginPath();
-                ctx.moveTo(0, lane);
-                ctx.lineTo(canvas.width, lane);
-                ctx.stroke();
-            }
-
-            // Linee Diagonali Bianchi di delimitazione
-            ctx.lineWidth = 1.5;
-            for (let x = -100 - stripeOffset; x < canvas.width + 100; x += 50) {
-                ctx.beginPath();
-                ctx.moveTo(x + 60, 108);
-                ctx.lineTo(x, 280);
-                ctx.stroke();
-            }
-
-            // Traguardo a Vento Diagonale
-            let finishX = canvas.width - 60 - ((totalDistance - distance) * 0.8);
-            if (finishX > -50 && finishX < canvas.width + 50) {
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(finishX + 80, 108);
-                ctx.lineTo(finishX, 280);
-                ctx.stroke();
-            }
-
-            // 5. ATLETI (Disegnati di trequarti come nello screenshot)
-            // Avversaria donna in 2a corsia
-            let botPosX = 90 + ((botDist - distance) * 0.8);
-            drawRunner(botPosX, 135, '#e74c3c', '#000000', false);
-
-            // PLAYMAN in 3a corsia (In primo piano)
-            drawRunner(110, 165, '#e74c3c', '#d35400', true);
-
-            // 6. INTERFACCIA HUD IN ALTO (Uguale allo screenshot)
-            // Targa con Logo P e Nome Atleta
-            ctx.fillStyle = '#e74c3c';
-            ctx.beginPath();
-            ctx.moveTo(10, 8);
-            ctx.lineTo(130, 8);
-            ctx.lineTo(120, 32);
-            ctx.lineTo(10, 32);
-            ctx.fill();
-
-            // Logo P Bianco
+            // Cartelloni Pubblicitari
+            let adHeight = 20;
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'italic bold 14px sans-serif';
-            ctx.fillText("P", 18, 26);
+            ctx.fillRect(0, crowdHeight, canvas.width, adHeight);
+            ctx.fillStyle = '#b71540';
+            ctx.font = '10px monospace';
+            ctx.fillText("PLAYMAN SUMMER GAMES  -  WORLD CHAMPIONSHIP", -((distance * 1.5) % 300) + 50, crowdHeight + 14);
 
-            // Nome Atleta in Italico
+            // 2. PISTA D'ATLETICA
+            let trackTop = crowdHeight + adHeight;
+            let trackHeight = canvas.height - trackTop;
+            let laneHeight = trackHeight / 3;
+
+            ctx.fillStyle = '#b71540';
+            ctx.fillRect(0, trackTop, canvas.width, trackHeight);
+
+            // Righe di corsia
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'italic bold 12px sans-serif';
-            ctx.fillText(playerName, 42, 25);
+            for (let i = 0; i <= 3; i++) {
+                ctx.fillRect(0, trackTop + (i * laneHeight), canvas.width, 3);
+            }
 
-            // Cronometro Badge Rosso in Alto a Destra
-            ctx.fillStyle = '#e74c3c';
-            ctx.beginPath();
-            ctx.roundRect(canvas.width - 95, 8, 85, 28, 8);
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            // Righe rosse alternate di scorrimento pista
+            ctx.fillStyle = '#e55039';
+            let scrollX = (distance * 2) % 40;
+            for (let x = -scrollX; x < canvas.width; x += 40) {
+                ctx.fillRect(x, trackTop + 3, 20, laneHeight - 3);
+                ctx.fillRect(x + 20, trackTop + laneHeight + 3, 20, laneHeight - 3);
+                ctx.fillRect(x, trackTop + (laneHeight * 2) + 3, 20, laneHeight - 3);
+            }
 
-            // Testo Cronometro
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 13px monospace';
-            ctx.fillText(timer.toFixed(2), canvas.width - 82, 27);
+            // Traguardo a scacchi
+            let finishX = canvas.width - 150 - ((totalDistance - distance) * 0.8);
+            if (finishX > -30 && finishX < canvas.width + 30) {
+                for (let y = trackTop; y < canvas.height; y += 12) {
+                    ctx.fillStyle = ((y / 12) % 2 === 0) ? '#ffffff' : '#000000';
+                    ctx.fillRect(finishX, y, 12, 12);
+                }
+            }
+
+            // 3. ATLETI IN CORSA
+            let playerX = canvas.width * 0.25;
+
+            // Corsia 1 (Bot 1)
+            let bot1PosX = playerX + ((bot1Dist - distance) * 0.8);
+            drawAthlete(bot1PosX, trackTop + (laneHeight * 0.3), '#e55039', '#4a69bd', false);
+
+            // Corsia 2 (PLAYMAN)
+            drawAthlete(playerX, trackTop + (laneHeight * 1.3), '#0a3d62', '#f6b93b', true);
+
+            // Corsia 3 (Bot 2)
+            let bot2PosX = playerX + ((bot2Dist - distance) * 0.8);
+            drawAthlete(bot2PosX, trackTop + (laneHeight * 2.3), '#78e08f', '#1e3799', false);
         }
 
-        // DISEGNO DELLO SPRITE PLAYMAN DI TREQUARTI (Stile Playman 3)
-        function drawRunner(x, y, shirtColor, hairColor, isPlayman) {
+        // SPRITE ATLETA (Scala dinamica in base all'altezza schermo)
+        function drawAthlete(x, y, shirtColor, hairColor, isPlayman) {
             if (x < -40 || x > canvas.width + 40) return;
 
             ctx.save();
@@ -423,92 +419,50 @@
 
             let frame = Math.floor(animFrame) % 4;
 
-            // Ombra sotto l'atleta
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.beginPath();
-            ctx.ellipse(8, 38, 12, 4, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // Capelli e Visiera
+            ctx.fillStyle = hairColor;
+            ctx.fillRect(4, 0, 16, 10);
 
-            // 1. Capelli a punta arancioni (Playman style)
-            ctx.fillStyle = isPlayman ? '#e67e22' : '#2c3e50';
-            ctx.beginPath();
-            ctx.arc(8, 2, 7, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Creste dei capelli per Playman
             if (isPlayman) {
-                ctx.fillRect(0, -6, 4, 6);
-                ctx.fillRect(5, -8, 4, 8);
-                ctx.fillRect(10, -5, 4, 6);
+                ctx.fillStyle = '#e55039'; // Visiera Playman
+                ctx.fillRect(0, 6, 20, 4);
             }
 
-            // 2. Viso e Collo
+            // Viso
             ctx.fillStyle = '#ffdd59';
-            ctx.fillRect(4, 3, 8, 7);
-            // Occhio
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(9, 5, 2, 2);
+            ctx.fillRect(6, 6, 12, 10);
 
-            // 3. Canottiera Rossa e Striscia Bianca
+            // Corpo
             ctx.fillStyle = shirtColor;
-            ctx.fillRect(2, 10, 10, 13);
-            ctx.fillStyle = '#ffffff'; // Striscia bianca laterale
-            ctx.fillRect(2, 10, 3, 13);
+            ctx.fillRect(4, 16, 16, 18);
 
-            // 4. Pantaloncini Neri
-            ctx.fillStyle = '#111111';
-            ctx.fillRect(2, 23, 10, 6);
+            // Numero di gara
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(9, 20, 6, 9);
 
-            // 5. Braccia
+            // Pantaloncini
+            ctx.fillStyle = '#0c2461';
+            ctx.fillRect(4, 34, 16, 8);
+
+            // Gambe
             ctx.fillStyle = '#ffdd59';
-            if (frame === 0 || frame === 2) {
-                ctx.fillRect(-3, 11, 5, 9);
-                ctx.fillRect(10, 13, 5, 8);
-            } else {
-                ctx.fillRect(-1, 13, 4, 8);
-                ctx.fillRect(11, 10, 5, 9);
-            }
-
-            // 6. Gambe e Scarpe Dorate
-            ctx.fillStyle = '#ffdd59'; // Pelle gambe
             if (running && speed > 5) {
                 if (frame === 0) {
-                    ctx.fillRect(-4, 28, 5, 7); // Gamba SX
-                    ctx.fillRect(-8, 33, 6, 4); 
-                    ctx.fillStyle = '#f1c40f'; // Scarpa
-                    ctx.fillRect(-11, 33, 4, 4);
-
-                    ctx.fillStyle = '#ffdd59';
-                    ctx.fillRect(8, 28, 5, 8);  // Gamba DX
-                    ctx.fillStyle = '#f1c40f';
-                    ctx.fillRect(11, 34, 5, 4);
+                    ctx.fillRect(-2, 42, 6, 14);
+                    ctx.fillRect(12, 42, 6, 10);
                 } else if (frame === 1) {
-                    ctx.fillRect(0, 28, 5, 9);
-                    ctx.fillRect(6, 28, 5, 8);
-                    ctx.fillStyle = '#f1c40f';
-                    ctx.fillRect(7, 34, 5, 4);
+                    ctx.fillRect(4, 42, 6, 16);
+                    ctx.fillRect(8, 42, 6, 8);
                 } else if (frame === 2) {
-                    ctx.fillRect(8, 28, 5, 7);
-                    ctx.fillRect(12, 33, 6, 4);
-                    ctx.fillStyle = '#f1c40f';
-                    ctx.fillRect(16, 33, 4, 4);
-
-                    ctx.fillStyle = '#ffdd59';
-                    ctx.fillRect(-2, 28, 5, 8);
-                    ctx.fillStyle = '#f1c40f';
-                    ctx.fillRect(-5, 34, 5, 4);
+                    ctx.fillRect(12, 42, 6, 14);
+                    ctx.fillRect(-2, 42, 6, 10);
                 } else {
-                    ctx.fillRect(3, 28, 5, 9);
-                    ctx.fillRect(-1, 28, 5, 8);
-                    ctx.fillStyle = '#f1c40f';
-                    ctx.fillRect(-2, 34, 5, 4);
+                    ctx.fillRect(8, 42, 6, 16);
+                    ctx.fillRect(4, 42, 6, 8);
                 }
             } else {
-                ctx.fillRect(2, 28, 4, 8);
-                ctx.fillRect(7, 28, 4, 8);
-                ctx.fillStyle = '#f1c40f';
-                ctx.fillRect(1, 34, 5, 4);
-                ctx.fillRect(6, 34, 5, 4);
+                ctx.fillRect(4, 42, 5, 14);
+                ctx.fillRect(11, 42, 5, 14);
             }
 
             ctx.restore();
@@ -519,13 +473,19 @@
 
             if (!running) {
                 running = true;
+                statusText.innerText = "CORRI!";
+                statusText.style.color = "#78e08f";
             }
 
             if (key !== lastKey) {
-                speed = Math.min(195, speed + 29);
+                speed = Math.min(210, speed + 32);
                 lastKey = key;
+                statusText.innerText = "RITMO PERFETTO!";
+                statusText.style.color = "#78e08f";
             } else {
-                speed = Math.max(0, speed - 40);
+                speed = Math.max(0, speed - 45);
+                statusText.innerText = "RITMO ERRATO!";
+                statusText.style.color = "#e55039";
             }
         }
 
