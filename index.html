@@ -10,12 +10,84 @@
             padding: 0;
             background-color: #111;
             color: white;
-            font-family: sans-serif;
+            font-family: 'Courier New', Courier, monospace;
             text-align: center;
             overflow: hidden;
             user-select: none;
         }
 
+        /* Schermata Menu */
+        #menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1e272e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        h1 {
+            color: #f1c40f;
+            font-size: 28px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px #d35400;
+        }
+
+        .subtitle {
+            color: #2ecc71;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: 2px solid #f1c40f;
+            text-align: center;
+            width: 70%;
+            max-width: 250px;
+            background: #2c3e50;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .menu-btn {
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            background: #e74c3c;
+            color: white;
+            border: 3px solid #fff;
+            border-radius: 12px;
+            box-shadow: 0 5px #95a5a6;
+            margin: 10px;
+            width: 80%;
+            max-width: 280px;
+            touch-action: manipulation;
+        }
+
+        .menu-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px #95a5a6;
+        }
+
+        .high-score-box {
+            margin-top: 20px;
+            padding: 10px;
+            background: #2c3e50;
+            border-radius: 8px;
+            border: 1px solid #f1c40f;
+            font-size: 14px;
+            color: #f1c40f;
+        }
+
+        /* Schermata Gioco */
         #game-header {
             padding: 10px;
             background: #222;
@@ -23,14 +95,14 @@
         }
 
         .hud-text {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            margin: 4px 0;
+            margin: 3px 0;
         }
 
         #gameCanvas {
             display: block;
-            margin: 15px auto;
+            margin: 10px auto;
             background: #27ae60;
             border: 3px solid #fff;
             border-radius: 8px;
@@ -57,15 +129,46 @@
             touch-action: manipulation;
         }
 
-        .btn:active {
-            background: #c0392b;
+        .btn:active { background: #c0392b; }
+
+        /* Pop-up Fine Gara */
+        #end-game-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2c3e50;
+            border: 4px solid #f1c40f;
+            padding: 20px;
+            border-radius: 15px;
+            z-index: 5;
+            width: 80%;
+            max-width: 300px;
         }
     </style>
 </head>
 <body>
 
+    <!-- MENU INIZIALE -->
+    <div id="menu-overlay">
+        <h1>PLAYMAN</h1>
+        <div class="subtitle">SUMMER GAMES</div>
+
+        <input type="text" id="playerName" placeholder="Tuo Nome" maxlength="10" value="PLAYER 1">
+
+        <button class="menu-btn" onclick="startGame()">🏁 100M PIANI</button>
+
+        <div class="high-score-box">
+            🏆 BEST RECORD: <br>
+            <span id="recordDisplay">Nessun Record</span>
+        </div>
+    </div>
+
+    <!-- SCHERMATA DI GIOCO -->
     <div id="game-header">
-        <div class="hud-text" id="status" style="color: #f1c40f;">ALTERNA SX E DX PER CORRERE!</div>
+        <div class="hud-text" id="playerDisplay" style="color: #3498db;">PLAYER: ---</div>
+        <div class="hud-text" id="status" style="color: #f1c40f;">ALTERNA SX E DX!</div>
         <div class="hud-text" id="timer">TEMPO: 0.00s</div>
     </div>
 
@@ -74,6 +177,14 @@
     <div class="controls">
         <button class="btn" id="btnSX">👈 SX</button>
         <button class="btn" id="btnDX">DX 👉</button>
+    </div>
+
+    <!-- POPUP FINE GARA -->
+    <div id="end-game-modal">
+        <h2 id="endTitle" style="color: #2ecc71; margin-top:0;">GARA FINITA!</h2>
+        <p id="endDetails">Tempo: 0.00s</p>
+        <button class="menu-btn" style="width:100%; margin:5px 0;" onclick="restartGame()">RIGIOCA 🔄</button>
+        <button class="menu-btn" style="width:100%; margin:5px 0; background:#7f8c8d;" onclick="showMenu()">MENU 🏠</button>
     </div>
 
     <script>
@@ -87,10 +198,61 @@
         let running = false;
         let finished = false;
         let animFrame = 0;
-        let totalDistance = 400; // Lunghezza percorso
+        let totalDistance = 400;
+
+        let playerName = "PLAYER 1";
+        let bestRecord = localStorage.getItem('playman_best') ? parseFloat(localStorage.getItem('playman_best')) : null;
+        let bestPlayer = localStorage.getItem('playman_player') || "";
 
         const statusText = document.getElementById('status');
         const timerText = document.getElementById('timer');
+        const playerDisplay = document.getElementById('playerDisplay');
+        const recordDisplay = document.getElementById('recordDisplay');
+
+        // Aggiorna Display Record
+        function updateRecordDisplay() {
+            if (bestRecord) {
+                recordDisplay.innerText = `${bestPlayer} - ${bestRecord.toFixed(2)}s`;
+            } else {
+                recordDisplay.innerText = "Nessun Record";
+            }
+        }
+        updateRecordDisplay();
+
+        function startGame() {
+            let inputName = document.getElementById('playerName').value.trim();
+            if (inputName !== "") playerName = inputName.toUpperCase();
+            
+            playerDisplay.innerText = "ATLETA: " + playerName;
+            document.getElementById('menu-overlay').style.display = 'none';
+            document.getElementById('end-game-modal').style.display = 'none';
+
+            resetVariables();
+        }
+
+        function showMenu() {
+            document.getElementById('end-game-modal').style.display = 'none';
+            document.getElementById('menu-overlay').style.display = 'flex';
+            updateRecordDisplay();
+        }
+
+        function restartGame() {
+            document.getElementById('end-game-modal').style.display = 'none';
+            resetVariables();
+        }
+
+        function resetVariables() {
+            distance = 0;
+            speed = 0;
+            lastKey = '';
+            timer = 0;
+            running = false;
+            finished = false;
+            animFrame = 0;
+            statusText.innerText = "ALTERNA SX E DX PER CORRERE!";
+            statusText.style.color = "#f1c40f";
+            timerText.innerText = "TEMPO: 0.00s";
+        }
 
         let lastTime = performance.now();
         function gameLoop(currentTime) {
@@ -101,15 +263,13 @@
                 timer += delta;
                 timerText.innerText = 'TEMPO: ' + timer.toFixed(2) + 's';
 
-                // Attrito
                 speed = Math.max(0, speed - (60 * delta));
                 distance += speed * delta;
                 animFrame += speed * delta * 0.2;
 
                 if (distance >= totalDistance) {
                     finished = true;
-                    statusText.innerText = 'ARRIVO! ' + timer.toFixed(2) + 's';
-                    statusText.style.color = '#2ecc71';
+                    handleFinish();
                 }
             }
 
@@ -117,22 +277,36 @@
             requestAnimationFrame(gameLoop);
         }
 
+        function handleFinish() {
+            let finalTime = timer.toFixed(2);
+            let isNewRecord = false;
+
+            if (!bestRecord || timer < bestRecord) {
+                bestRecord = timer;
+                bestPlayer = playerName;
+                localStorage.setItem('playman_best', bestRecord);
+                localStorage.setItem('playman_player', bestPlayer);
+                isNewRecord = true;
+            }
+
+            document.getElementById('endTitle').innerText = isNewRecord ? "🏆 NUOVO RECORD!" : "ARRIVO!";
+            document.getElementById('endTitle').style.color = isNewRecord ? "#f1c40f" : "#2ecc71";
+            document.getElementById('endDetails').innerText = `Atleta: ${playerName}\nTempo Finale: ${finalTime}s`;
+            document.getElementById('end-game-modal').style.display = 'block';
+        }
+
         function drawScene() {
-            // Sfondo Erba
             ctx.fillStyle = '#27ae60';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Pista d'atletica Rossa
             ctx.fillStyle = '#d35400';
             ctx.fillRect(0, 50, canvas.width, 100);
 
-            // Corsie bianche
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 50, canvas.width, 3);
             ctx.fillRect(0, 98, canvas.width, 4);
             ctx.fillRect(0, 147, canvas.width, 3);
 
-            // Righe di movimento sulla pista
             ctx.fillStyle = '#e67e22';
             let scrollX = (distance * 2) % 40;
             for (let x = -scrollX; x < canvas.width; x += 40) {
@@ -140,7 +314,6 @@
                 ctx.fillRect(x + 20, 102, 20, 45);
             }
 
-            // Traguardo
             let finishX = canvas.width - 40 - ((totalDistance - distance) * 0.8);
             if (finishX > 0 && finishX < canvas.width) {
                 for (let y = 50; y < 150; y += 10) {
@@ -149,7 +322,6 @@
                 }
             }
 
-            // Disegno Atleta (Playman)
             drawPlayer(60, 75);
         }
 
@@ -159,21 +331,17 @@
 
             let frame = Math.floor(animFrame) % 4;
 
-            // Testa bionda (Playman)
             ctx.fillStyle = '#f1c40f';
             ctx.fillRect(0, 0, 12, 10);
             ctx.fillStyle = '#ffdbac';
             ctx.fillRect(2, 4, 8, 8);
 
-            // Maglietta Rossa
             ctx.fillStyle = '#e74c3c';
             ctx.fillRect(0, 12, 12, 14);
 
-            // Pantaloncini Blu
             ctx.fillStyle = '#2980b9';
             ctx.fillRect(0, 26, 12, 8);
 
-            // Gambe (Animazione)
             ctx.fillStyle = '#ffdbac';
             if (speed > 5) {
                 if (frame === 0) {
@@ -198,7 +366,7 @@
         }
 
         function press(key) {
-            if (finished) return;
+            if (finished || document.getElementById('menu-overlay').style.display !== 'none') return;
 
             if (!running) {
                 running = true;
