@@ -3,27 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Playman Summer Games</title>
+    <title>Playman Summer Games Clone</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
         body {
             margin: 0;
             padding: 0;
-            background-color: #111;
+            background-color: #0d0f12;
             color: white;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Press Start 2P', monospace;
             text-align: center;
             overflow: hidden;
             user-select: none;
         }
 
-        /* Schermata Menu */
+        /* MENU E OVERLAY RETRÒ */
         #menu-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #1e272e;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #1e3799, #0c2461);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -32,164 +31,172 @@
         }
 
         h1 {
-            color: #f1c40f;
-            font-size: 28px;
+            color: #f6b93b;
+            font-size: 22px;
             margin-bottom: 5px;
-            text-shadow: 2px 2px #d35400;
+            text-shadow: 3px 3px #b71540;
         }
 
         .subtitle {
-            color: #2ecc71;
-            font-size: 14px;
+            color: #78e08f;
+            font-size: 10px;
             margin-bottom: 25px;
+            letter-spacing: 1px;
         }
 
         input[type="text"] {
             padding: 10px;
-            font-size: 18px;
-            border-radius: 8px;
-            border: 2px solid #f1c40f;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 3px solid #f6b93b;
             text-align: center;
             width: 70%;
-            max-width: 250px;
-            background: #2c3e50;
-            color: white;
+            max-width: 220px;
+            background: #0c2461;
+            color: #fff;
             margin-bottom: 20px;
         }
 
         .menu-btn {
-            padding: 15px 30px;
-            font-size: 20px;
-            font-weight: bold;
-            background: #e74c3c;
+            padding: 15px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 12px;
+            background: #e55039;
             color: white;
             border: 3px solid #fff;
-            border-radius: 12px;
-            box-shadow: 0 5px #95a5a6;
-            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 5px #b71540;
+            margin: 8px;
             width: 80%;
-            max-width: 280px;
+            max-width: 250px;
             touch-action: manipulation;
         }
 
         .menu-btn:active {
             transform: translateY(3px);
-            box-shadow: 0 2px #95a5a6;
+            box-shadow: 0 2px #b71540;
         }
 
         .high-score-box {
-            margin-top: 20px;
+            margin-top: 15px;
             padding: 10px;
-            background: #2c3e50;
-            border-radius: 8px;
-            border: 1px solid #f1c40f;
-            font-size: 14px;
-            color: #f1c40f;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px dashed #f6b93b;
+            font-size: 9px;
+            color: #f6b93b;
+            line-height: 1.5;
         }
 
-        /* Schermata Gioco */
+        /* HUD GIOCO */
         #game-header {
-            padding: 10px;
-            background: #222;
-            border-bottom: 2px solid #444;
+            padding: 8px;
+            background: #0c2461;
+            border-bottom: 3px solid #f6b93b;
         }
 
         .hud-text {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 3px 0;
+            font-size: 10px;
+            margin: 4px 0;
+            line-height: 1.4;
         }
 
         #gameCanvas {
             display: block;
             margin: 10px auto;
-            background: #27ae60;
-            border: 3px solid #fff;
-            border-radius: 8px;
-            max-width: 95vw;
+            background: #000;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+            max-width: 98vw;
+            image-rendering: pixelated; /* Forza effetto Pixel Art su display HD */
         }
 
+        /* CONTROLLI VIRTUALI STILE NOKIA */
         .controls {
             display: flex;
             justify-content: space-around;
             position: fixed;
-            bottom: 20px;
+            bottom: 15px;
             width: 100%;
         }
 
         .btn {
             width: 44%;
-            height: 85px;
-            font-size: 24px;
-            font-weight: bold;
-            background: #e74c3c;
+            height: 80px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 16px;
+            background: linear-gradient(180deg, #fa983a, #e55039);
             color: white;
             border: 3px solid #fff;
-            border-radius: 15px;
+            border-radius: 12px;
+            box-shadow: 0 6px #b71540;
             touch-action: manipulation;
         }
 
-        .btn:active { background: #c0392b; }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px #b71540;
+        }
 
-        /* Pop-up Fine Gara */
         #end-game-modal {
             display: none;
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            background: #2c3e50;
-            border: 4px solid #f1c40f;
+            background: #0c2461;
+            border: 4px solid #f6b93b;
             padding: 20px;
-            border-radius: 15px;
-            z-index: 5;
+            border-radius: 12px;
+            z-index: 20;
             width: 80%;
-            max-width: 300px;
+            max-width: 280px;
         }
     </style>
 </head>
 <body>
 
-    <!-- MENU INIZIALE -->
+    <!-- MENU PRINCIPALE -->
     <div id="menu-overlay">
         <h1>PLAYMAN</h1>
         <div class="subtitle">SUMMER GAMES</div>
 
-        <input type="text" id="playerName" placeholder="Tuo Nome" maxlength="10" value="PLAYER 1">
+        <input type="text" id="playerName" placeholder="NOME" maxlength="8" value="PLAYMAN">
 
-        <button class="menu-btn" onclick="startGame()">🏁 100M PIANI</button>
+        <button class="menu-btn" onclick="startGame()">🏃 100M SPRINT</button>
 
         <div class="high-score-box">
-            🏆 BEST RECORD: <br>
-            <span id="recordDisplay">Nessun Record</span>
+            BEST RECORD:<br>
+            <span id="recordDisplay">--.--s</span>
         </div>
     </div>
 
-    <!-- SCHERMATA DI GIOCO -->
+    <!-- HUD -->
     <div id="game-header">
-        <div class="hud-text" id="playerDisplay" style="color: #3498db;">PLAYER: ---</div>
-        <div class="hud-text" id="status" style="color: #f1c40f;">ALTERNA SX E DX!</div>
+        <div class="hud-text" id="status" style="color: #f6b93b;">ALTERNA SX E DX!</div>
         <div class="hud-text" id="timer">TEMPO: 0.00s</div>
     </div>
 
-    <canvas id="gameCanvas" width="360" height="200"></canvas>
+    <!-- CANVAS DI GIOCO -->
+    <canvas id="gameCanvas" width="320" height="220"></canvas>
 
+    <!-- TASTI DI GIOCO -->
     <div class="controls">
-        <button class="btn" id="btnSX">👈 SX</button>
-        <button class="btn" id="btnDX">DX 👉</button>
+        <button class="btn" id="btnSX">◀ 4</button>
+        <button class="btn" id="btnDX">6 ▶</button>
     </div>
 
-    <!-- POPUP FINE GARA -->
+    <!-- FINISH MODAL -->
     <div id="end-game-modal">
-        <h2 id="endTitle" style="color: #2ecc71; margin-top:0;">GARA FINITA!</h2>
-        <p id="endDetails">Tempo: 0.00s</p>
-        <button class="menu-btn" style="width:100%; margin:5px 0;" onclick="restartGame()">RIGIOCA 🔄</button>
-        <button class="menu-btn" style="width:100%; margin:5px 0; background:#7f8c8d;" onclick="showMenu()">MENU 🏠</button>
+        <h2 id="endTitle" style="color: #78e08f; font-size: 14px; margin-top:0;">GARA FINITA!</h2>
+        <p id="endDetails" style="font-size: 10px; line-height: 1.6;"></p>
+        <button class="menu-btn" style="width:100%; margin:5px 0;" onclick="restartGame()">RIGIOCA</button>
+        <button class="menu-btn" style="width:100%; margin:5px 0; background:#6a89cc;" onclick="showMenu()">MENU</button>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
 
         let distance = 0;
         let speed = 0;
@@ -198,23 +205,27 @@
         let running = false;
         let finished = false;
         let animFrame = 0;
-        let totalDistance = 400;
+        let totalDistance = 500;
 
-        let playerName = "PLAYER 1";
+        // Rivali BOT (Per ricreare le altre corsie di Playman)
+        let bot1Speed = 110 + Math.random() * 20;
+        let bot2Speed = 100 + Math.random() * 25;
+        let bot1Dist = 0;
+        let bot2Dist = 0;
+
+        let playerName = "PLAYMAN";
         let bestRecord = localStorage.getItem('playman_best') ? parseFloat(localStorage.getItem('playman_best')) : null;
         let bestPlayer = localStorage.getItem('playman_player') || "";
 
         const statusText = document.getElementById('status');
         const timerText = document.getElementById('timer');
-        const playerDisplay = document.getElementById('playerDisplay');
         const recordDisplay = document.getElementById('recordDisplay');
 
-        // Aggiorna Display Record
         function updateRecordDisplay() {
             if (bestRecord) {
-                recordDisplay.innerText = `${bestPlayer} - ${bestRecord.toFixed(2)}s`;
+                recordDisplay.innerText = `${bestPlayer}: ${bestRecord.toFixed(2)}s`;
             } else {
-                recordDisplay.innerText = "Nessun Record";
+                recordDisplay.innerText = "NESSUN RECORD";
             }
         }
         updateRecordDisplay();
@@ -223,7 +234,6 @@
             let inputName = document.getElementById('playerName').value.trim();
             if (inputName !== "") playerName = inputName.toUpperCase();
             
-            playerDisplay.innerText = "ATLETA: " + playerName;
             document.getElementById('menu-overlay').style.display = 'none';
             document.getElementById('end-game-modal').style.display = 'none';
 
@@ -249,8 +259,12 @@
             running = false;
             finished = false;
             animFrame = 0;
-            statusText.innerText = "ALTERNA SX E DX PER CORRERE!";
-            statusText.style.color = "#f1c40f";
+            bot1Dist = 0;
+            bot2Dist = 0;
+            bot1Speed = 105 + Math.random() * 15;
+            bot2Speed = 95 + Math.random() * 20;
+            statusText.innerText = "PRONTI... VIA!";
+            statusText.style.color = "#f6b93b";
             timerText.innerText = "TEMPO: 0.00s";
         }
 
@@ -263,9 +277,14 @@
                 timer += delta;
                 timerText.innerText = 'TEMPO: ' + timer.toFixed(2) + 's';
 
-                speed = Math.max(0, speed - (60 * delta));
+                // Fisica Atleta
+                speed = Math.max(0, speed - (55 * delta));
                 distance += speed * delta;
-                animFrame += speed * delta * 0.2;
+                animFrame += speed * delta * 0.18;
+
+                // Fisica Avversari (BOT)
+                bot1Dist += bot1Speed * delta;
+                bot2Dist += bot2Speed * delta;
 
                 if (distance >= totalDistance) {
                     finished = true;
@@ -289,77 +308,126 @@
                 isNewRecord = true;
             }
 
-            document.getElementById('endTitle').innerText = isNewRecord ? "🏆 NUOVO RECORD!" : "ARRIVO!";
-            document.getElementById('endTitle').style.color = isNewRecord ? "#f1c40f" : "#2ecc71";
-            document.getElementById('endDetails').innerText = `Atleta: ${playerName}\nTempo Finale: ${finalTime}s`;
+            document.getElementById('endTitle').innerText = isNewRecord ? "🏆 NUOVO RECORD!" : "GARA FINITA!";
+            document.getElementById('endTitle').style.color = isNewRecord ? "#f6b93b" : "#78e08f";
+            document.getElementById('endDetails').innerText = `${playerName}\nTEMPO: ${finalTime}s`;
             document.getElementById('end-game-modal').style.display = 'block';
         }
 
         function drawScene() {
-            ctx.fillStyle = '#27ae60';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = '#d35400';
-            ctx.fillRect(0, 50, canvas.width, 100);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 50, canvas.width, 3);
-            ctx.fillRect(0, 98, canvas.width, 4);
-            ctx.fillRect(0, 147, canvas.width, 3);
-
-            ctx.fillStyle = '#e67e22';
-            let scrollX = (distance * 2) % 40;
-            for (let x = -scrollX; x < canvas.width; x += 40) {
-                ctx.fillRect(x, 53, 20, 45);
-                ctx.fillRect(x + 20, 102, 20, 45);
+            // 1. SPALTI E PUBBLICO (Pixel colorati in alto)
+            ctx.fillStyle = '#1e3799';
+            ctx.fillRect(0, 0, canvas.width, 30);
+            for (let x = 0; x < canvas.width; x += 6) {
+                for (let y = 5; y < 25; y += 6) {
+                    let colors = ['#f6b93b', '#e55039', '#ffffff', '#78e08f', '#4a69bd'];
+                    ctx.fillStyle = colors[(x + y + Math.floor(animFrame)) % colors.length];
+                    ctx.fillRect(x, y, 4, 4);
+                }
             }
 
-            let finishX = canvas.width - 40 - ((totalDistance - distance) * 0.8);
-            if (finishX > 0 && finishX < canvas.width) {
-                for (let y = 50; y < 150; y += 10) {
+            // Cartelloni Pubblicitari
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 30, canvas.width, 15);
+            ctx.fillStyle = '#b71540';
+            ctx.font = '8px monospace';
+            ctx.fillText("PLAYMAN SUMMER GAMES  PLAYMAN", -((distance * 1.5) % 150), 41);
+
+            // 2. PISTA D'ATLETICA (Corsie Rosse a Scorrimento)
+            ctx.fillStyle = '#b71540';
+            ctx.fillRect(0, 45, canvas.width, 175);
+
+            // Linee di corsia bianche
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 45, canvas.width, 2);
+            ctx.fillRect(0, 90, canvas.width, 2);
+            ctx.fillRect(0, 135, canvas.width, 2);
+            ctx.fillRect(0, 180, canvas.width, 2);
+
+            // Segna-metri e righe che scorrono
+            ctx.fillStyle = '#e55039';
+            let scrollX = (distance * 2) % 30;
+            for (let x = -scrollX; x < canvas.width; x += 30) {
+                ctx.fillRect(x, 47, 15, 43);
+                ctx.fillRect(x + 15, 92, 15, 43);
+                ctx.fillRect(x, 137, 15, 43);
+            }
+
+            // Traguardo a Scacchi
+            let finishX = canvas.width - 50 - ((totalDistance - distance) * 0.7);
+            if (finishX > -20 && finishX < canvas.width) {
+                for (let y = 45; y < 180; y += 10) {
                     ctx.fillStyle = ((y / 10) % 2 === 0) ? '#ffffff' : '#000000';
                     ctx.fillRect(finishX, y, 10, 10);
                 }
             }
 
-            drawPlayer(60, 75);
+            // 3. ATLETI IN CORSA
+            // Avversario Corsia 1 (Top)
+            let bot1PosX = 30 + ((bot1Dist - distance) * 0.7);
+            drawAthlete(bot1PosX, 55, '#e55039', '#4a69bd', false);
+
+            // GIOCATORE PRINCIPALE (Playman - Corsia 2)
+            drawAthlete(30, 100, '#0a3d62', '#f6b93b', true);
+
+            // Avversario Corsia 3 (Bottom)
+            let bot2PosX = 30 + ((bot2Dist - distance) * 0.7);
+            drawAthlete(bot2PosX, 145, '#78e08f', '#1e3799', false);
         }
 
-        function drawPlayer(x, y) {
+        // DISEGNO DELLO SPRITE PLAYMAN VERO
+        function drawAthlete(x, y, shirtColor, hairColor, isPlayman) {
+            if (x < -20 || x > canvas.width + 20) return;
+
             ctx.save();
-            ctx.translate(x, y);
+            ctx.translate(Math.floor(x), Math.floor(y));
 
             let frame = Math.floor(animFrame) % 4;
 
-            ctx.fillStyle = '#f1c40f';
-            ctx.fillRect(0, 0, 12, 10);
-            ctx.fillStyle = '#ffdbac';
-            ctx.fillRect(2, 4, 8, 8);
+            // Capelli e Visiera (Se Playman, capello biondo + visiera)
+            ctx.fillStyle = hairColor;
+            ctx.fillRect(2, 0, 10, 8); // Capelli
 
-            ctx.fillStyle = '#e74c3c';
-            ctx.fillRect(0, 12, 12, 14);
+            if (isPlayman) {
+                ctx.fillStyle = '#e55039'; // Visiera rossa Playman
+                ctx.fillRect(0, 4, 12, 2);
+            }
 
-            ctx.fillStyle = '#2980b9';
-            ctx.fillRect(0, 26, 12, 8);
+            // Viso (Pelle)
+            ctx.fillStyle = '#ffdd59';
+            ctx.fillRect(4, 4, 8, 6);
 
-            ctx.fillStyle = '#ffdbac';
-            if (speed > 5) {
+            // Canottiera / Corpo
+            ctx.fillStyle = shirtColor;
+            ctx.fillRect(2, 10, 10, 12);
+
+            // Numero di Gara su canottiera
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(5, 13, 4, 6);
+
+            // Pantaloncini
+            ctx.fillStyle = '#0c2461';
+            ctx.fillRect(2, 22, 10, 6);
+
+            // Gambe ed Effetto Corsa
+            ctx.fillStyle = '#ffdd59';
+            if (running && speed > 5) {
                 if (frame === 0) {
-                    ctx.fillRect(-4, 34, 6, 12);
-                    ctx.fillRect(10, 34, 6, 10);
+                    ctx.fillRect(-2, 28, 4, 10); // Sx Indietro
+                    ctx.fillRect(8, 28, 4, 8);   // Dx Avanti
                 } else if (frame === 1) {
-                    ctx.fillRect(0, 34, 6, 14);
-                    ctx.fillRect(6, 34, 6, 8);
+                    ctx.fillRect(2, 28, 4, 12);
+                    ctx.fillRect(5, 28, 4, 6);
                 } else if (frame === 2) {
-                    ctx.fillRect(10, 34, 6, 12);
-                    ctx.fillRect(-4, 34, 6, 10);
+                    ctx.fillRect(8, 28, 4, 10);  // Dx Indietro
+                    ctx.fillRect(-2, 28, 4, 8);  // Sx Avanti
                 } else {
-                    ctx.fillRect(6, 34, 6, 14);
-                    ctx.fillRect(0, 34, 6, 8);
+                    ctx.fillRect(5, 28, 4, 12);
+                    ctx.fillRect(2, 28, 4, 6);
                 }
             } else {
-                ctx.fillRect(1, 34, 4, 14);
-                ctx.fillRect(7, 34, 4, 14);
+                ctx.fillRect(2, 28, 3, 10);
+                ctx.fillRect(7, 28, 3, 10);
             }
 
             ctx.restore();
@@ -370,19 +438,19 @@
 
             if (!running) {
                 running = true;
-                statusText.innerText = 'CORRI!';
-                statusText.style.color = '#2ecc71';
+                statusText.innerText = "CORRI!";
+                statusText.style.color = "#78e08f";
             }
 
             if (key !== lastKey) {
-                speed = Math.min(180, speed + 28);
+                speed = Math.min(195, speed + 29);
                 lastKey = key;
-                statusText.innerText = 'OTTIMO RITMO!';
-                statusText.style.color = '#2ecc71';
+                statusText.innerText = "RITMO PERFETTO!";
+                statusText.style.color = "#78e08f";
             } else {
-                speed = Math.max(0, speed - 35);
-                statusText.innerText = 'RITMO ERRATO!';
-                statusText.style.color = '#e74c3c';
+                speed = Math.max(0, speed - 40);
+                statusText.innerText = "RITMO ERRATO!";
+                statusText.style.color = "#e55039";
             }
         }
 
