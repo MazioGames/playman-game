@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ruba Dungeon</title>
     <style>
         :root {
@@ -13,82 +13,118 @@
             --accent-color: #d9a05b;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            height: 100dvh; /* Altezza dinamica reale per browser mobile */
+            overflow: hidden; /* Blocca completamente lo scroll */
             background-color: var(--bg-color);
             color: #fdf6e3;
-            margin: 0;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 8px;
+            touch-action: manipulation;
+        }
+
+        header {
+            text-align: center;
+            height: 5vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--accent-color);
+            font-size: 0.75rem;
+            height: 6vh;
+        }
+
+        .status-item {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        h1 {
+        .status-val {
+            font-weight: bold;
             color: var(--accent-color);
-            margin-bottom: 5px;
         }
 
-        .status-bar {
-            display: flex;
-            gap: 15px;
-            background: rgba(0,0,0,0.4);
-            padding: 10px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid var(--accent-color);
-        }
-
+        /* Tabellone con le esatte proporzioni dei 10 slot */
         .board {
             display: grid;
-            grid-template-columns: repeat(4, 130px);
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 6px;
+            height: 62vh;
             background: #3e352b;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            padding: 6px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
 
         .slot {
-            width: 130px;
-            height: 180px;
-            border: 2px dashed #6b5b48;
-            border-radius: 8px;
+            border: 1px dashed #6b5b48;
+            border-radius: 6px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
-            background: rgba(0,0,0,0.2);
-            text-align: center;
-            padding: 5px;
-            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px;
+            overflow: hidden;
         }
 
         .slot-title {
             position: absolute;
-            top: 5px;
-            font-size: 0.75rem;
+            top: 2px;
+            font-size: 0.55rem;
             color: var(--accent-color);
             text-transform: uppercase;
             font-weight: bold;
+            pointer-events: none;
+            z-index: 2;
+            text-shadow: 0 1px 2px #000;
         }
 
         .card {
-            width: 110px;
-            height: 150px;
+            width: 90%;
+            height: 80%;
             background-color: var(--card-bg);
             color: var(--text-color);
-            border-radius: 6px;
-            border: 2px solid #000;
+            border-radius: 4px;
+            border: 1.5px solid #000;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 8px;
-            box-sizing: border-box;
+            padding: 4px;
             font-weight: bold;
-            box-shadow: 2px 4px 8px rgba(0,0,0,0.3);
-            margin-top: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            margin-top: 10px;
         }
 
         .card.back {
@@ -97,95 +133,111 @@
             color: #fff;
             justify-content: center;
             align-items: center;
+            font-size: 0.7rem;
+            text-align: center;
         }
 
-        .card-val { font-size: 1.2rem; }
-        .card-suit { font-size: 1rem; }
+        .card-val { 
+            font-size: 0.9rem; 
+            line-height: 1;
+        }
+        
+        .card-suit { 
+            font-size: 0.65rem; 
+            align-self: flex-end;
+            text-transform: capitalize;
+        }
 
         .controls {
-            margin-top: 20px;
+            height: 8vh;
             display: flex;
-            gap: 10px;
+            gap: 6px;
         }
 
         button {
+            flex: 1;
             background-color: var(--primary-color);
             color: white;
             border: 1px solid var(--accent-color);
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 5px;
+            padding: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-radius: 6px;
             cursor: pointer;
-            transition: 0.2s;
-        }
-
-        button:hover {
-            background-color: #a71d1d;
+            active: scale(0.98);
         }
 
         button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
+            background-color: #444;
+            border-color: #666;
+            color: #888;
+            opacity: 0.6;
         }
 
         #log {
-            margin-top: 20px;
-            width: 560px;
-            height: 100px;
+            height: 12vh;
             background: #1e1a15;
             border: 1px solid #6b5b48;
-            border-radius: 5px;
-            padding: 10px;
+            border-radius: 6px;
+            padding: 6px;
             overflow-y: auto;
             font-family: monospace;
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             color: #d9a05b;
+            line-height: 1.2;
+        }
+
+        /* Span specifico per slot doppi */
+        .span-2 {
+            grid-column: span 2;
         }
     </style>
 </head>
 <body>
 
-    <h1>★ Ruba Dungeon ★</h1>
+    <header>
+        <h1>★ Ruba Dungeon ★</h1>
+    </header>
     
     <div class="status-bar">
-        <div>Eroe HP: <span id="hero-hp">12</span>/12</div>
-        <div>Modalità: <span id="mode-display">Facile</span></div>
-        <div>Oro accumulato: <span id="gold-count">0</span></div>
-        <div>Reliquie: <span id="relic-count">0</span>/4</div>
+        <div class="status-item">Eroe HP<span id="hero-hp" class="status-val">12/12</span></div>
+        <div class="status-item">Modalità<span id="mode-display" class="status-val">Facile</span></div>
+        <div class="status-item">Oro<span id="gold-count" class="status-val">0</span></div>
+        <div class="status-item">Reliquie<span id="relic-count" class="status-val">0/4</span></div>
     </div>
 
     <div class="board">
-        <!-- Riga 1 -->
-        <div class="slot"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon"></div></div>
-        <div class="slot"><span class="slot-title">2. Evento</span><div id="card-event"></div></div>
-        <div class="slot"><span class="slot-title">3. Personaggi</span><div id="deck-characters"></div></div>
+        <!-- Riga 1 (Tabellone 1, 2, 3, 4) -->
+        <div class="slot"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
+        <div class="slot"><span class="slot-title">2. Evento</span><div id="card-event" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
+        <div class="slot"><span class="slot-title">3. Personaggi</span><div id="deck-characters" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
         <div class="slot"><span class="slot-title">4. Catacomba</span><div id="slot-catacomb"></div></div>
 
-        <!-- Riga 2 -->
+        <!-- Riga 2 (Tabellone 6, 7, 5) -->
         <div class="slot"><span class="slot-title">6. Reliquie</span><div id="slot-relics"></div></div>
-        <div class="slot"><span class="slot-title">7. Eroe</span><div id="slot-hero"></div></div>
-        <div class="slot" style="grid-column: span 2;"><span class="slot-title">5. Nemico / Azioni</span><div id="slot-enemy"></div></div>
+        <div class="slot"><span class="slot-title">7. Eroe</span><div id="slot-hero" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
+        <div class="slot span-2"><span class="slot-title">5. Nemico / Azioni</span><div id="slot-enemy" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
 
-        <!-- Riga 3 -->
+        <!-- Riga 3 (Tabellone 8, 9, 10) -->
         <div class="slot"><span class="slot-title">8. Oro</span><div id="slot-gold"></div></div>
         <div class="slot"><span class="slot-title">9. Aiuti</span><div id="slot-aids"></div></div>
-        <div class="slot" style="grid-column: span 2;"><span class="slot-title">10. Mazzo Reliquie</span><div id="deck-relics"></div></div>
+        <div class="slot span-2"><span class="slot-title">10. Mazzo Reliquie</span><div id="deck-relics" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
     </div>
 
     <div class="controls">
-        <button id="btn-draw" onclick="drawEvent()">Pesca Evento (Crawling)</button>
+        <button id="btn-draw" onclick="drawEvent()">Pesca Evento</button>
         <button id="btn-roll" onclick="rollDiceTest()" disabled>Lancia 1D6</button>
-        <button id="btn-restart" onclick="initGame()">Nuova Partita</button>
+        <button id="btn-restart" onclick="initGame()">Nuova</button>
     </div>
 
-    <div id="log">Benvenuto in Ruba Dungeon! Clicca "Pesca Evento" per iniziare.</div>
+    <div id="log">Tocca "Pesca Evento" per iniziare.</div>
 
     <script>
         const SUITS = { BASTONI: 'Bastoni', COPPE: 'Coppe', DENARI: 'Denari', SPADE: 'Spade' };
         
         let hero = { hp: 12, maxHp: 12, card: null };
         let enemy = null;
-        let mode = 'Facile'; // 'Facile' o 'Difficile'
+        let mode = 'Facile';
         
         let mazzoDungeon = [];
         let mazzoPersonaggi = [];
@@ -194,7 +246,6 @@
         let cartaEventoCorrente = null;
         let carteOro = 0;
         let reliquieOttenute = [];
-        let carteAiuto = [];
 
         function log(msg) {
             const logDiv = document.getElementById('log');
@@ -221,55 +272,41 @@
 
         function initGame() {
             document.getElementById('log').innerHTML = '';
-            log('Inizio nuova partita...');
+            log('Nuova partita avviata.');
 
             let fullDeck = createDeck();
             shuffle(fullDeck);
 
-            // 1. Selezione Eroe (8 o 9 casuale)
             let heroIndex = fullDeck.findIndex(c => c.value === 8 || c.value === 9);
             hero.card = fullDeck.splice(heroIndex, 1)[0];
             hero.hp = 12;
 
-            // 2. Mazzo Personaggi (valori 8, 9, 10 rimasti)
             mazzoPersonaggi = fullDeck.filter(c => c.value >= 8 && c.value <= 10);
             fullDeck = fullDeck.filter(c => !(c.value >= 8 && c.value <= 10));
 
-            // 3. Mazzo Reliquie (gli Assi - valore 1)
             mazzoReliquie = fullDeck.filter(c => c.value === 1);
             fullDeck = fullDeck.filter(c => c.value !== 1);
 
-            // 4. Mazzo Dungeon (tutte le altre carte rimaste)
             mazzoDungeon = fullDeck;
 
             carteOro = 0;
             reliquieOttenute = [];
-            carteAiuto = [];
             cartaEventoCorrente = null;
 
             updateUI();
-            log(`Eroe scelto: ${hero.card.value} di ${hero.card.suit}`);
+            log(`Eroe: ${hero.card.value} ${hero.card.suit}`);
         }
 
         function updateUI() {
-            document.getElementById('hero-hp').innerText = hero.hp;
+            document.getElementById('hero-hp').innerText = `${hero.hp}/12`;
             document.getElementById('gold-count').innerText = carteOro;
-            document.getElementById('relic-count').innerText = reliquieOttenute.length;
+            document.getElementById('relic-count').innerText = `${reliquieOttenute.length}/4`;
 
-            // Render Slot Eroe
             document.getElementById('slot-hero').innerHTML = renderCardHTML(hero.card);
-
-            // Render Mazzo Dungeon
-            document.getElementById('deck-dungeon').innerHTML = mazzoDungeon.length > 0 ? `<div class="card back">Dungeon (${mazzoDungeon.length})</div>` : '';
-
-            // Render Carta Evento
+            document.getElementById('deck-dungeon').innerHTML = mazzoDungeon.length > 0 ? `<div class="card back">Dungeon<br>(${mazzoDungeon.length})</div>` : '';
             document.getElementById('card-event').innerHTML = cartaEventoCorrente ? renderCardHTML(cartaEventoCorrente) : '';
-
-            // Render Mazzo Personaggi
-            document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card back">Personaggi (${mazzoPersonaggi.length})</div>` : '';
-
-            // Render Mazzo Reliquie
-            document.getElementById('deck-relics').innerHTML = mazzoReliquie.length > 0 ? `<div class="card back">Reliquie (${mazzoReliquie.length})</div>` : '';
+            document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card back">Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
+            document.getElementById('deck-relics').innerHTML = mazzoReliquie.length > 0 ? `<div class="card back">Reliquie<br>(${mazzoReliquie.length})</div>` : '';
         }
 
         function renderCardHTML(card) {
@@ -283,59 +320,52 @@
 
         function drawEvent() {
             if (mazzoDungeon.length === 0) {
-                log('Il mazzo Dungeon è finito! Rimischiamento...');
-                // Gestione rimischiamento se necessario
+                log('Mazzo Dungeon esaurito!');
                 return;
             }
 
             cartaEventoCorrente = mazzoDungeon.pop();
             updateUI();
             
-            log(`Pesca Evento: ${cartaEventoCorrente.value} di ${cartaEventoCorrente.suit}`);
+            log(`Evento: ${cartaEventoCorrente.value} ${cartaEventoCorrente.suit}`);
             
-            // Abilita azioni relative all'evento
             document.getElementById('btn-draw').disabled = true;
             document.getElementById('btn-roll').disabled = false;
 
-            // Risoluzione automatica Denari (Oro) o Spade (Nemico)
             if (cartaEventoCorrente.suit === SUITS.DENARI) {
                 carteOro += cartaEventoCorrente.value;
-                log(`Hai guadagnato ${cartaEventoCorrente.value} Oro!`);
+                log(`+${cartaEventoCorrente.value} Oro!`);
                 endTurn();
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
-                log(`Scontro imminente! Inizia il combattimento.`);
+                log(`Combattimento!`);
                 startCombat();
             }
         }
 
         function rollDiceTest() {
             let roll = Math.floor(Math.random() * 6) + 1;
-            log(`Lancio del dado: ${roll}`);
+            log(`Dado 1D6: ${roll}`);
 
             let vce = cartaEventoCorrente.value;
-            let success = false;
-
-            if (roll === 1) success = false;
-            else if (roll === 6) success = true;
-            else if (roll >= vce) success = true;
+            let success = (roll === 6 || (roll !== 1 && roll >= vce));
 
             if (success) {
-                log('Test SUPERATO!');
+                log('SUPERATO!');
                 if (cartaEventoCorrente.suit === SUITS.COPPE) {
                     hero.hp = Math.min(hero.maxHp, hero.hp + vce);
-                    log(`Ti sei curato di ${vce} HP!`);
+                    log(`Cura +${vce} HP`);
                 }
             } else {
-                log('Test FALLITO!');
+                log('FALLITO!');
                 let damage = Math.floor(vce / 2);
                 if (cartaEventoCorrente.suit === SUITS.BASTONI || cartaEventoCorrente.suit === SUITS.COPPE) {
                     hero.hp -= damage;
-                    log(`Subisci ${damage} danni da Trappola/Intruglio!`);
+                    log(`Danno -${damage} HP`);
                 }
             }
 
             if (hero.hp <= 0) {
-                log('GAME OVER! L\'Eroe è stato sconfitto.');
+                log('GAME OVER!');
                 document.getElementById('btn-roll').disabled = true;
                 return;
             }
@@ -346,10 +376,7 @@
         function startCombat() {
             if (mazzoPersonaggi.length === 0) return;
             enemy = mazzoPersonaggi.pop();
-            
-            let enemyHp = mode === 'Facile' ? 6 : (enemy.value === 8 ? 8 : enemy.value === 9 ? 9 : 10);
-            log(`Appare il Nemico: ${enemy.value} di ${enemy.suit} (HP: ${enemyHp})`);
-            
+            log(`Nemico: ${enemy.value} ${enemy.suit}`);
             document.getElementById('slot-enemy').innerHTML = renderCardHTML(enemy);
         }
 
@@ -359,7 +386,6 @@
             updateUI();
         }
 
-        // Avvio automatico al caricamento
         window.onload = initGame;
     </script>
 </body>
