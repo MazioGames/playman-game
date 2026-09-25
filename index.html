@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ruba Dungeon - Tabellone Ufficiale</title>
+    <title>Ruba Dungeon - Versione Completa</title>
     <style>
         :root {
             --bg-color: #1e1915;
@@ -86,7 +86,6 @@
             color: var(--accent-color);
         }
 
-        /* TABELLONE FEDELE ALLA FOTO (Grid 4x4) */
         .board {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -207,7 +206,7 @@
             color: white;
             border: 1px solid var(--accent-color);
             padding: 2px;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
@@ -259,7 +258,6 @@
         <div class="status-item">Sconfitti<span id="defeated-count" class="status-val">0/11</span></div>
     </div>
 
-    <!-- TABELLONE DISPOSTO COME DA SPECIFICA -->
     <div class="board">
         <!-- RIGA 1 -->
         <div class="slot"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon" class="card-container"></div></div>
@@ -288,10 +286,12 @@
         <div class="btn-group">
             <button id="btn-draw" onclick="drawEvent()">Pesca Evento</button>
             <button id="btn-roll" onclick="rollDiceTest()" disabled>Lancia 1D6</button>
-            <button id="btn-pay-gold" onclick="payGoldForEvent()" disabled>Paga Oro</button>
+            <button id="btn-pay-gold" onclick="payGoldForEvent(false)" disabled>Evita (Oro)</button>
+            <button id="btn-corrupt" onclick="payGoldForEvent(true)" disabled>Corrompi</button>
         </div>
         <div class="btn-group">
             <button id="btn-play-action" onclick="playSelectedHeroCards()" disabled>Gioca Azione</button>
+            <button id="btn-discard-action" onclick="discardSelectedHeroCards()" disabled>Scarta Carte</button>
             <button id="btn-use-aid" onclick="toggleAidSelection()" disabled>Usa Aiuto</button>
             <button id="btn-restart" onclick="initGame()">Nuova Partita</button>
         </div>
@@ -310,7 +310,7 @@
         let mazzoDungeon = [];
         let mazzoPersonaggi = [];
         let mazzoReliquie = [];
-        let carteEventoPila = []; // Pila delle carte evento scartate per il riciclo
+        let carteEventoPila = [];
         let catacomba = [];
         
         let cartaEventoCorrente = null;
@@ -333,8 +333,8 @@
         }
 
         function toggleMode() {
-            if (inCombattimento || carteEventoCorrente) {
-                log('Impossibile cambiare modalità durante il gioco.');
+            if (inCombattimento || cartaEventoCorrente) {
+                log('Impossibile cambiare modalità a partita in corso.');
                 return;
             }
             mode = mode === 'Facile' ? 'Difficile' : 'Facile';
@@ -367,16 +367,13 @@
             let fullDeck = createDeck();
             shuffle(fullDeck);
 
-            // Estrazione Eroe (valore 8 o 9)
             let heroIndex = fullDeck.findIndex(c => c.value === 8 || c.value === 9);
             hero.card = fullDeck.splice(heroIndex, 1)[0];
             hero.hp = 12;
 
-            // Mazzo Personaggi (8, 9 e 10)
             mazzoPersonaggi = fullDeck.filter(c => c.value >= 8 && c.value <= 10);
             fullDeck = fullDeck.filter(c => !(c.value >= 8 && c.value <= 10));
 
-            // Mazzo Reliquie (Assi / 1)
             mazzoReliquie = fullDeck.filter(c => c.value === 1);
             fullDeck = fullDeck.filter(c => c.value !== 1);
 
@@ -409,7 +406,6 @@
             document.getElementById('relic-count').innerText = `${reliquieOttenute.length}/4`;
             document.getElementById('defeated-count').innerText = `${nemiciSconfittiTotali}/11`;
 
-            // Render Tabellone
             document.getElementById('deck-dungeon').innerHTML = mazzoDungeon.length > 0 ? `<div class="card back">1. Dungeon<br>(${mazzoDungeon.length})</div>` : '';
             document.getElementById('card-event').innerHTML = cartaEventoCorrente ? renderCardHTML(cartaEventoCorrente) : (carteEventoPila.length > 0 ? renderCardHTML(carteEventoPila[carteEventoPila.length - 1], `x${carteEventoPila.length}`) : '');
             document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card enemy-back">3. Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
@@ -423,7 +419,6 @@
             document.getElementById('slot-aids').innerHTML = carteAiuto.length > 0 ? renderCardHTML(carteAiuto[carteAiuto.length - 1], `x${carteAiuto.length}`) : '';
             document.getElementById('deck-relics').innerHTML = mazzoReliquie.length > 0 ? `<div class="card back">10. Reliquie<br>(${mazzoReliquie.length})</div>` : '';
 
-            // Render Azioni Eroe
             let heroActHTML = '';
             carteAzioneEroe.forEach((card) => {
                 let isSel = carteSelezionateEroe.includes(card.id);
@@ -431,7 +426,6 @@
             });
             document.getElementById('slot-hero-actions').innerHTML = heroActHTML;
 
-            // Render Azioni Nemico
             let enemyActHTML = '';
             carteAzioneNemico.forEach((card, idx) => {
                 if (idx === carteAzioneNemico.length - 1) {
@@ -444,6 +438,7 @@
             
             document.getElementById('btn-use-aid').disabled = !inCombattimento || carteAiuto.length === 0;
             document.getElementById('btn-use-aid').style.borderColor = usaCartaAiutoAttiva ? '#00e676' : 'var(--accent-color)';
+            document.getElementById('btn-discard-action').disabled = carteSelezionateEroe.length === 0;
         }
 
         function renderCardHTML(card, badge = '', isSelected = false, clickFn = '') {
@@ -460,7 +455,6 @@
         function drawEvent() {
             if (inCombattimento) return;
 
-            // Regola 3 Crawling: Se il mazzo Dungeon finisce, si prendono le carte evento (2), si mischiano e si ricrea il mazzo Dungeon (1)
             if (mazzoDungeon.length === 0) {
                 if (carteEventoPila.length === 0) {
                     log('Nessuna carta rimasta per ricostruire il Dungeon!');
@@ -476,7 +470,6 @@
             updateUI();
             
             log(`Evento pescato: ${cartaEventoCorrente.value} di ${cartaEventoCorrente.suit}`);
-            
             document.getElementById('btn-draw').disabled = true;
 
             let requiredGold = (mode === 'Difficile' && cartaEventoCorrente.suit === SUITS.SPADE) 
@@ -486,13 +479,15 @@
             if (cartaEventoCorrente.suit === SUITS.DENARI) {
                 carteOro.push(cartaEventoCorrente);
                 log(`Oro ottenuto (+${cartaEventoCorrente.value})!`);
-                endTurn(false); // Non va nelle carte evento scartate perché va nella pila dell'oro
+                endTurn(false);
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
-                log(`Nemico avvistato! Paga ${requiredGold} Oro o lancia 1D6 per svelare/combattere.`);
+                log(`Nemico avvistato! Costo evitamento: ${requiredGold} Oro.`);
                 document.getElementById('btn-pay-gold').disabled = getTotalGold() < requiredGold;
+                document.getElementById('btn-corrupt').disabled = getTotalGold() <= requiredGold;
                 document.getElementById('btn-roll').disabled = false;
             } else {
                 document.getElementById('btn-pay-gold').disabled = getTotalGold() < requiredGold;
+                document.getElementById('btn-corrupt').disabled = true;
                 document.getElementById('btn-roll').disabled = false;
             }
         }
@@ -502,7 +497,6 @@
             log(`Lancio 1D6: ${roll}`);
 
             let vce = cartaEventoCorrente.value;
-            // Regola 3.2: 1 = Fallimento, 6 = Successo, 2-5 = Successo se >= Valore Carta Evento
             let success = (roll === 6 || (roll !== 1 && roll >= vce));
 
             if (cartaEventoCorrente.suit === SUITS.SPADE) {
@@ -522,7 +516,7 @@
                 let damage = Math.floor(vce / 2);
                 if (cartaEventoCorrente.suit === SUITS.BASTONI || cartaEventoCorrente.suit === SUITS.COPPE) {
                     hero.hp -= damage;
-                    log(`Danni subiti dal trappola/evento: ${damage}. HP: ${hero.hp}`);
+                    log(`Danni subiti: ${damage} (VCE/2 arrotondato per difetto). HP: ${hero.hp}`);
                 }
             }
 
@@ -530,9 +524,13 @@
             endTurn(true);
         }
 
-        function payGoldForEvent() {
+        function payGoldForEvent(isCorruption = false) {
             let vce = cartaEventoCorrente.value;
             let requiredGold = (mode === 'Difficile' && cartaEventoCorrente.suit === SUITS.SPADE) ? vce * 2 : vce;
+
+            if (isCorruption) {
+                requiredGold += 1; // Spendiamo più dell'oro richiesto per tentare la corruzione
+            }
 
             if (getTotalGold() < requiredGold) return;
 
@@ -543,10 +541,40 @@
                 catacomba.push(card);
             }
 
-            log(`Pagati ${paid} Oro per superare l'evento.`);
+            log(`Spesi ${paid} Oro.`);
 
             if (cartaEventoCorrente.suit === SUITS.SPADE) {
-                log('Combattimento evitato con successo!');
+                if (isCorruption) {
+                    // Tentativo di Corruzione (Svela il Nemico prima di combattere)
+                    if (mazzoPersonaggi.length === 0) {
+                        log('Nessun nemico rimasto!');
+                        endTurn(true);
+                        return;
+                    }
+                    let candidateEnemy = mazzoPersonaggi.pop();
+                    log(`Tentativo di Corruzione su: ${candidateEnemy.value} di ${candidateEnemy.suit}...`);
+
+                    if (candidateEnemy.value === 8 || candidateEnemy.value === 9) {
+                        carteAiuto.push(candidateEnemy);
+                        log(`★ CORRUZIONE RIUSCITA! ★ Il nemico si unisce a te come Carta Aiuto (9)!`);
+                        nemiciSconfittiTotali++;
+                        endTurn(true);
+                        return;
+                    } else {
+                        log(`☠ CORRUZIONE FALLITA! Il Re (10) è INCORRUTTIBILE! L'oro speso è perso e devi combattere!`);
+                        enemy = candidateEnemy;
+                        enemyHp = mode === 'Facile' ? 6 : 10;
+                        inCombattimento = true;
+                        document.getElementById('btn-draw').disabled = true;
+                        document.getElementById('btn-roll').disabled = true;
+                        document.getElementById('btn-pay-gold').disabled = true;
+                        document.getElementById('btn-corrupt').disabled = true;
+                        setupCombatTurn();
+                        return;
+                    }
+                } else {
+                    log('Combattimento evitato pagando l\'oro esatto.');
+                }
             }
 
             endTurn(true);
@@ -574,6 +602,7 @@
             document.getElementById('btn-draw').disabled = true;
             document.getElementById('btn-roll').disabled = true;
             document.getElementById('btn-pay-gold').disabled = true;
+            document.getElementById('btn-corrupt').disabled = true;
 
             setupCombatTurn();
         }
@@ -595,8 +624,6 @@
         }
 
         function selectHeroAction(id) {
-            if (!inCombattimento) return;
-
             let card = carteAzioneEroe.find(c => c.id === id);
             if (!card) return;
 
@@ -614,6 +641,16 @@
                     carteSelezionateEroe.push(id);
                 }
             }
+            updateUI();
+        }
+
+        function discardSelectedHeroCards() {
+            if (carteSelezionateEroe.length === 0) return;
+            let discarded = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
+            carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
+            catacomba.push(...discarded);
+            carteSelezionateEroe = [];
+            log(`Scartate ${discarded.length} carte dalla mano dell'Eroe.`);
             updateUI();
         }
 
@@ -745,6 +782,7 @@
                 document.getElementById('btn-draw').disabled = true;
                 document.getElementById('btn-roll').disabled = true;
                 document.getElementById('btn-pay-gold').disabled = true;
+                document.getElementById('btn-corrupt').disabled = true;
                 document.getElementById('btn-play-action').disabled = true;
             }
         }
@@ -768,6 +806,7 @@
                 document.getElementById('btn-draw').disabled = false;
                 document.getElementById('btn-roll').disabled = true;
                 document.getElementById('btn-pay-gold').disabled = true;
+                document.getElementById('btn-corrupt').disabled = true;
                 document.getElementById('btn-play-action').disabled = true;
             }
             updateUI();
