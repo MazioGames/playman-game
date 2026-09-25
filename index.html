@@ -11,6 +11,7 @@
             --text-color: #2c251e;
             --primary-color: #8b0000;
             --accent-color: #d9a05b;
+            --selected-border: #00e676;
         }
 
         * {
@@ -24,21 +25,21 @@
         html, body {
             width: 100%;
             height: 100vh;
-            height: 100dvh; /* Altezza dinamica reale per browser mobile */
-            overflow: hidden; /* Blocca completamente lo scroll */
+            height: 100dvh;
+            overflow: hidden;
             background-color: var(--bg-color);
             color: #fdf6e3;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 8px;
+            padding: 6px;
             touch-action: manipulation;
         }
 
         header {
             text-align: center;
-            height: 5vh;
+            height: 4vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -46,7 +47,7 @@
 
         h1 {
             color: var(--accent-color);
-            font-size: 1.1rem;
+            font-size: 1rem;
             letter-spacing: 1px;
         }
 
@@ -55,11 +56,11 @@
             justify-content: space-around;
             align-items: center;
             background: rgba(0, 0, 0, 0.4);
-            padding: 4px 8px;
+            padding: 2px 4px;
             border-radius: 6px;
             border: 1px solid var(--accent-color);
-            font-size: 0.75rem;
-            height: 6vh;
+            font-size: 0.7rem;
+            height: 5vh;
         }
 
         .status-item {
@@ -73,36 +74,35 @@
             color: var(--accent-color);
         }
 
-        /* Tabellone con le esatte proporzioni dei 10 slot */
         .board {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            gap: 6px;
-            height: 62vh;
+            gap: 4px;
+            height: 60vh;
             background: #3e352b;
-            padding: 6px;
-            border-radius: 10px;
+            padding: 4px;
+            border-radius: 8px;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
 
         .slot {
             border: 1px dashed #6b5b48;
-            border-radius: 6px;
+            border-radius: 5px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
             background: rgba(0, 0, 0, 0.2);
-            padding: 2px;
+            padding: 1px;
             overflow: hidden;
         }
 
         .slot-title {
             position: absolute;
-            top: 2px;
-            font-size: 0.55rem;
+            top: 1px;
+            left: 2px;
+            font-size: 0.5rem;
             color: var(--accent-color);
             text-transform: uppercase;
             font-weight: bold;
@@ -111,9 +111,20 @@
             text-shadow: 0 1px 2px #000;
         }
 
+        .card-container {
+            display: flex;
+            gap: 2px;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            padding-top: 10px;
+        }
+
         .card {
-            width: 90%;
-            height: 80%;
+            width: 100%;
+            height: 85%;
+            max-width: 65px;
             background-color: var(--card-bg);
             color: var(--text-color);
             border-radius: 4px;
@@ -121,10 +132,17 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 4px;
+            padding: 2px 4px;
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-            margin-top: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.1s;
+        }
+
+        .card.selected {
+            border: 2px solid var(--selected-border);
+            transform: translateY(-4px);
+            box-shadow: 0 0 8px var(--selected-border);
         }
 
         .card.back {
@@ -133,25 +151,26 @@
             color: #fff;
             justify-content: center;
             align-items: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-align: center;
         }
 
-        .card-val { 
-            font-size: 0.9rem; 
-            line-height: 1;
-        }
-        
-        .card-suit { 
-            font-size: 0.65rem; 
-            align-self: flex-end;
-            text-transform: capitalize;
-        }
+        .card-val { font-size: 0.85rem; line-height: 1; }
+        .card-suit { font-size: 0.55rem; align-self: flex-end; text-transform: capitalize; }
+
+        .span-2 { grid-column: span 2; }
 
         .controls {
-            height: 8vh;
+            height: 13vh;
             display: flex;
-            gap: 6px;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 4px;
+            height: 50%;
         }
 
         button {
@@ -159,12 +178,11 @@
             background-color: var(--primary-color);
             color: white;
             border: 1px solid var(--accent-color);
-            padding: 6px;
-            font-size: 0.8rem;
+            padding: 4px;
+            font-size: 0.75rem;
             font-weight: bold;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
-            active: scale(0.98);
         }
 
         button:disabled {
@@ -175,21 +193,25 @@
         }
 
         #log {
-            height: 12vh;
+            height: 14vh;
             background: #1e1a15;
             border: 1px solid #6b5b48;
-            border-radius: 6px;
-            padding: 6px;
+            border-radius: 5px;
+            padding: 4px;
             overflow-y: auto;
             font-family: monospace;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #d9a05b;
             line-height: 1.2;
         }
 
-        /* Span specifico per slot doppi */
-        .span-2 {
-            grid-column: span 2;
+        .badge {
+            font-size: 0.6rem;
+            background: var(--accent-color);
+            color: #000;
+            padding: 1px 3px;
+            border-radius: 3px;
+            margin-top: 2px;
         }
     </style>
 </head>
@@ -201,33 +223,39 @@
     
     <div class="status-bar">
         <div class="status-item">Eroe HP<span id="hero-hp" class="status-val">12/12</span></div>
-        <div class="status-item">Modalità<span id="mode-display" class="status-val">Facile</span></div>
+        <div class="status-item">Nemico HP<span id="enemy-hp" class="status-val">-</span></div>
         <div class="status-item">Oro<span id="gold-count" class="status-val">0</span></div>
         <div class="status-item">Reliquie<span id="relic-count" class="status-val">0/4</span></div>
     </div>
 
     <div class="board">
-        <!-- Riga 1 (Tabellone 1, 2, 3, 4) -->
-        <div class="slot"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
-        <div class="slot"><span class="slot-title">2. Evento</span><div id="card-event" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
-        <div class="slot"><span class="slot-title">3. Personaggi</span><div id="deck-characters" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
-        <div class="slot"><span class="slot-title">4. Catacomba</span><div id="slot-catacomb"></div></div>
+        <!-- Riga 1 -->
+        <div class="slot"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon" class="card-container"></div></div>
+        <div class="slot"><span class="slot-title">2. Evento</span><div id="card-event" class="card-container"></div></div>
+        <div class="slot"><span class="slot-title">3. Personaggi</span><div id="deck-characters" class="card-container"></div></div>
+        <div class="slot"><span class="slot-title">4. Catacomba</span><div id="slot-catacomb" class="card-container"></div></div>
 
-        <!-- Riga 2 (Tabellone 6, 7, 5) -->
-        <div class="slot"><span class="slot-title">6. Reliquie</span><div id="slot-relics"></div></div>
-        <div class="slot"><span class="slot-title">7. Eroe</span><div id="slot-hero" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
-        <div class="slot span-2"><span class="slot-title">5. Nemico / Azioni</span><div id="slot-enemy" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
+        <!-- Riga 2 -->
+        <div class="slot"><span class="slot-title">6. Reliquie</span><div id="slot-relics" class="card-container"></div></div>
+        <div class="slot"><span class="slot-title">7. Eroe</span><div id="slot-hero" class="card-container"></div></div>
+        <div class="slot span-2"><span class="slot-title">5. Carte Nemico</span><div id="slot-enemy-actions" class="card-container"></div></div>
 
-        <!-- Riga 3 (Tabellone 8, 9, 10) -->
-        <div class="slot"><span class="slot-title">8. Oro</span><div id="slot-gold"></div></div>
-        <div class="slot"><span class="slot-title">9. Aiuti</span><div id="slot-aids"></div></div>
-        <div class="slot span-2"><span class="slot-title">10. Mazzo Reliquie</span><div id="deck-relics" style="width:100%;height:100%;display:flex;justify-center;align-items:center;"></div></div>
+        <!-- Riga 3 -->
+        <div class="slot"><span class="slot-title">8. Oro</span><div id="slot-gold" class="card-container"></div></div>
+        <div class="slot"><span class="slot-title">9. Aiuti</span><div id="slot-aids" class="card-container"></div></div>
+        <div class="slot span-2"><span class="slot-title">Carte Azione Eroe</span><div id="slot-hero-actions" class="card-container"></div></div>
     </div>
 
     <div class="controls">
-        <button id="btn-draw" onclick="drawEvent()">Pesca Evento</button>
-        <button id="btn-roll" onclick="rollDiceTest()" disabled>Lancia 1D6</button>
-        <button id="btn-restart" onclick="initGame()">Nuova</button>
+        <div class="btn-group">
+            <button id="btn-draw" onclick="drawEvent()">Pesca Evento</button>
+            <button id="btn-roll" onclick="rollDiceTest()" disabled>Lancia 1D6</button>
+            <button id="btn-pay-gold" onclick="payGoldForEvent()" disabled>Paga Oro</button>
+        </div>
+        <div class="btn-group">
+            <button id="btn-play-action" onclick="playSelectedHeroCards()" disabled>Gioca Carta Azione</button>
+            <button id="btn-restart" onclick="initGame()">Nuova Partita</button>
+        </div>
     </div>
 
     <div id="log">Tocca "Pesca Evento" per iniziare.</div>
@@ -237,15 +265,24 @@
         
         let hero = { hp: 12, maxHp: 12, card: null };
         let enemy = null;
+        let enemyHp = 0;
         let mode = 'Facile';
         
         let mazzoDungeon = [];
         let mazzoPersonaggi = [];
         let mazzoReliquie = [];
+        let catacomba = [];
         
         let cartaEventoCorrente = null;
-        let carteOro = 0;
+        let carteOro = [];
         let reliquieOttenute = [];
+        let carteAiuto = [];
+
+        let carteAzioneEroe = [];
+        let carteAzioneNemico = [];
+        let carteSelezionateEroe = [];
+
+        let inCombattimento = false;
 
         function log(msg) {
             const logDiv = document.getElementById('log');
@@ -257,7 +294,7 @@
             let deck = [];
             for (let suit in SUITS) {
                 for (let val = 1; val <= 10; val++) {
-                    deck.push({ suit: SUITS[suit], value: val });
+                    deck.push({ suit: SUITS[suit], value: val, id: Math.random().toString(36).substr(2, 9) });
                 }
             }
             return deck;
@@ -288,57 +325,102 @@
             fullDeck = fullDeck.filter(c => c.value !== 1);
 
             mazzoDungeon = fullDeck;
-
-            carteOro = 0;
+            catacomba = [];
+            carteOro = [];
             reliquieOttenute = [];
-            cartaEventoCorrente = null;
+            carteAiuto = [];
+            carteAzioneEroe = [];
+            carteAzioneNemico = [];
+            carteSelezionateEroe = [];
+            enemy = null;
+            inCombattimento = false;
 
             updateUI();
-            log(`Eroe: ${hero.card.value} ${hero.card.suit}`);
+            log(`Eroe scelto: ${hero.card.value} di ${hero.card.suit}`);
+        }
+
+        function getTotalGold() {
+            return carteOro.reduce((sum, card) => sum + card.value, 0);
         }
 
         function updateUI() {
             document.getElementById('hero-hp').innerText = `${hero.hp}/12`;
-            document.getElementById('gold-count').innerText = carteOro;
+            document.getElementById('enemy-hp').innerText = enemy ? `${enemyHp}` : '-';
+            document.getElementById('gold-count').innerText = getTotalGold();
             document.getElementById('relic-count').innerText = `${reliquieOttenute.length}/4`;
 
+            // Display Slot principali
             document.getElementById('slot-hero').innerHTML = renderCardHTML(hero.card);
             document.getElementById('deck-dungeon').innerHTML = mazzoDungeon.length > 0 ? `<div class="card back">Dungeon<br>(${mazzoDungeon.length})</div>` : '';
             document.getElementById('card-event').innerHTML = cartaEventoCorrente ? renderCardHTML(cartaEventoCorrente) : '';
             document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card back">Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
-            document.getElementById('deck-relics').innerHTML = mazzoReliquie.length > 0 ? `<div class="card back">Reliquie<br>(${mazzoReliquie.length})</div>` : '';
+            document.getElementById('slot-gold').innerHTML = carteOro.length > 0 ? renderCardHTML(carteOro[carteOro.length - 1], `x${carteOro.length}`) : '';
+            document.getElementById('slot-relics').innerHTML = reliquieOttenute.length > 0 ? renderCardHTML(reliquieOttenute[reliquieOttenute.length - 1], `x${reliquieOttenute.length}`) : '';
+            document.getElementById('slot-aids').innerHTML = carteAiuto.length > 0 ? renderCardHTML(carteAiuto[carteAiuto.length - 1], `x${carteAiuto.length}`) : '';
+            document.getElementById('slot-catacomb').innerHTML = catacomba.length > 0 ? `<div class="card back">Scarti<br>(${catacomba.length})</div>` : '';
+
+            // Render Azioni Combattimento
+            let heroActHTML = '';
+            carteAzioneEroe.forEach((card) => {
+                let isSel = carteSelezionateEroe.includes(card.id);
+                heroActHTML += renderCardHTML(card, '', isSel, `selectHeroAction('${card.id}')`);
+            });
+            document.getElementById('slot-hero-actions').innerHTML = heroActHTML;
+
+            let enemyActHTML = '';
+            carteAzioneNemico.forEach((card, idx) => {
+                if (idx === carteAzioneNemico.length - 1) {
+                    enemyActHTML += renderCardHTML(card); // Prima carta nemico visibile per la risposta
+                } else {
+                    enemyActHTML += `<div class="card back">Nemico</div>`;
+                }
+            });
+            document.getElementById('slot-enemy-actions').innerHTML = enemyActHTML;
         }
 
-        function renderCardHTML(card) {
+        function renderCardHTML(card, badge = '', isSelected = false, clickFn = '') {
+            if (!card) return '';
             return `
-                <div class="card">
+                <div class="card ${isSelected ? 'selected' : ''}" onclick="${clickFn}">
                     <div class="card-val">${card.value}</div>
                     <div class="card-suit">${card.suit}</div>
+                    ${badge ? `<div class="badge">${badge}</div>` : ''}
                 </div>
             `;
         }
 
         function drawEvent() {
+            if (inCombattimento) return;
+
             if (mazzoDungeon.length === 0) {
-                log('Mazzo Dungeon esaurito!');
-                return;
+                if (catacomba.length === 0) {
+                    log('Nessuna carta rimasta per ricreare il Dungeon!');
+                    return;
+                }
+                log('Mazzo Dungeon esaurito! Rimescolo la Catacomba...');
+                mazzoDungeon = [...catacomba];
+                catacomba = [];
+                shuffle(mazzoDungeon);
             }
 
             cartaEventoCorrente = mazzoDungeon.pop();
             updateUI();
             
-            log(`Evento: ${cartaEventoCorrente.value} ${cartaEventoCorrente.suit}`);
+            log(`Evento: ${cartaEventoCorrente.value} di ${cartaEventoCorrente.suit}`);
             
             document.getElementById('btn-draw').disabled = true;
-            document.getElementById('btn-roll').disabled = false;
 
             if (cartaEventoCorrente.suit === SUITS.DENARI) {
-                carteOro += cartaEventoCorrente.value;
-                log(`+${cartaEventoCorrente.value} Oro!`);
+                carteOro.push(cartaEventoCorrente);
+                log(`Hai raccolto la carta Oro (+${cartaEventoCorrente.value})!`);
                 endTurn();
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
-                log(`Combattimento!`);
-                startCombat();
+                log(`Carta Spade pescata! Prepara il combattimento.`);
+                document.getElementById('btn-pay-gold').disabled = getTotalGold() < cartaEventoCorrente.value;
+                document.getElementById('btn-roll').disabled = false;
+            } else {
+                document.getElementById('btn-pay-gold').disabled = getTotalGold() < cartaEventoCorrente.value;
+                document.getElementById('btn-roll').disabled = false;
             }
         }
 
@@ -349,40 +431,227 @@
             let vce = cartaEventoCorrente.value;
             let success = (roll === 6 || (roll !== 1 && roll >= vce));
 
+            if (cartaEventoCorrente.suit === SUITS.SPADE) {
+                if (success) {
+                    log('Test superato! Inizia il combattimento normale.');
+                    startCombat();
+                } else {
+                    log('Test fallito! Inizia il combattimento con il Nemico!');
+                    startCombat();
+                }
+                return;
+            }
+
             if (success) {
-                log('SUPERATO!');
+                log('Test SUPERATO!');
                 if (cartaEventoCorrente.suit === SUITS.COPPE) {
                     hero.hp = Math.min(hero.maxHp, hero.hp + vce);
-                    log(`Cura +${vce} HP`);
+                    log(`Cura effettuata: HP attuali ${hero.hp}`);
                 }
             } else {
-                log('FALLITO!');
+                log('Test FALLITO!');
                 let damage = Math.floor(vce / 2);
                 if (cartaEventoCorrente.suit === SUITS.BASTONI || cartaEventoCorrente.suit === SUITS.COPPE) {
                     hero.hp -= damage;
-                    log(`Danno -${damage} HP`);
+                    log(`Subisci ${damage} danni! HP: ${hero.hp}`);
                 }
             }
 
-            if (hero.hp <= 0) {
-                log('GAME OVER!');
-                document.getElementById('btn-roll').disabled = true;
-                return;
+            checkGameOver();
+            endTurn();
+        }
+
+        function payGoldForEvent() {
+            let vce = cartaEventoCorrente.value;
+            if (getTotalGold() < vce) return;
+
+            let paid = 0;
+            while (paid < vce && carteOro.length > 0) {
+                let card = carteOro.pop();
+                paid += card.value;
+                catacomba.push(card);
+            }
+
+            log(`Pagati ${paid} Oro per risolvere l'evento!`);
+
+            if (cartaEventoCorrente.suit === SUITS.SPADE) {
+                log('Evitato il combattimento pagando in oro.');
             }
 
             endTurn();
         }
 
         function startCombat() {
-            if (mazzoPersonaggi.length === 0) return;
+            if (mazzoPersonaggi.length === 0) {
+                log('Nessun nemico rimasto nel mazzo personaggi!');
+                endTurn();
+                return;
+            }
+
+            inCombattimento = true;
             enemy = mazzoPersonaggi.pop();
-            log(`Nemico: ${enemy.value} ${enemy.suit}`);
-            document.getElementById('slot-enemy').innerHTML = renderCardHTML(enemy);
+            enemyHp = mode === 'Facile' ? 6 : (enemy.value === 8 ? 8 : enemy.value === 9 ? 9 : 10);
+            log(`COMBATTIMENTO! Nemico: ${enemy.value} di ${enemy.suit} (HP: ${enemyHp})`);
+
+            document.getElementById('btn-draw').disabled = true;
+            document.getElementById('btn-roll').disabled = true;
+            document.getElementById('btn-pay-gold').disabled = true;
+
+            setupCombatTurn();
+        }
+
+        function setupCombatTurn() {
+            // Servire carte azione eroe (fino ad averne 3)
+            while (carteAzioneEroe.length < 3 && mazzoDungeon.length > 0) {
+                carteAzioneEroe.push(mazzoDungeon.pop());
+            }
+
+            // Servire 3 carte coperti per il nemico
+            carteAzioneNemico = [];
+            for (let i = 0; i < 3 && mazzoDungeon.length > 0; i++) {
+                carteAzioneNemico.push(mazzoDungeon.pop());
+            }
+
+            carteSelezionateEroe = [];
+            document.getElementById('btn-play-action').disabled = false;
+            updateUI();
+        }
+
+        function selectHeroAction(id) {
+            if (!inCombattimento) return;
+
+            let card = carteAzioneEroe.find(c => c.id === id);
+            if (!card) return;
+
+            if (carteSelezionateEroe.includes(id)) {
+                carteSelezionateEroe = carteSelezionateEroe.filter(i => i !== id);
+            } else {
+                if (carteSelezionateEroe.length > 0) {
+                    let firstCard = carteAzioneEroe.find(c => c.id === carteSelezionateEroe[0]);
+                    if (firstCard.value !== card.value) {
+                        // Per le Combo le carte devono avere lo stesso valore
+                        carteSelezionateEroe = [id];
+                    } else {
+                        carteSelezionateEroe.push(id);
+                    }
+                } else {
+                    carteSelezionateEroe.push(id);
+                }
+            }
+            updateUI();
+        }
+
+        function playSelectedHeroCards() {
+            if (carteSelezionateEroe.length === 0 || carteAzioneNemico.length === 0) return;
+
+            let heroCardsPlayed = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
+            let enemyCardPlayed = carteAzioneNemico.pop();
+
+            // Calcolo valore eroe (Somma valori + bonus reliquie/aiuto del seme)
+            let chosenSuit = heroCardsPlayed[0].suit;
+            let heroBaseValue = heroCardsPlayed.reduce((sum, c) => sum + c.value, 0);
+            
+            let relicBonus = reliquieOttenute.filter(r => r.suit === chosenSuit).length;
+            let aidBonus = carteAiuto.filter(a => a.suit === chosenSuit).length;
+            
+            let heroTotalValue = heroBaseValue + relicBonus + aidBonus;
+
+            log(`Tu giochi Combo [${chosenSuit}] Valore Totale: ${heroTotalValue}`);
+            log(`Il Nemico gioca: ${enemyCardPlayed.value} di ${enemyCardPlayed.suit}`);
+
+            // Risoluzione Effetti dello Scontro
+            resolveCombatExchange(heroCardsPlayed[0].suit, heroTotalValue, enemyCardPlayed.suit, enemyCardPlayed.value);
+
+            // Rimuovi carte giocate
+            carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
+            carteSelezionateEroe = [];
+            catacomba.push(enemyCardPlayed, ...heroCardsPlayed);
+
+            checkGameOver();
+            checkCombatStatus();
+        }
+
+        function resolveCombatExchange(hSuit, hVal, eSuit, eVal) {
+            // Effetto Nemico sull'Eroe
+            if (eSuit === SUITS.SPADE) {
+                let damage = Math.max(0, eVal - (hSuit === SUITS.DENARI ? hVal : 0));
+                hero.hp -= damage;
+                log(`Nemico attacca! Subisci ${damage} danni.`);
+            } else if (eSuit === SUITS.COPPE) {
+                enemyHp = Math.min(10, enemyHp + eVal);
+                log(`Il Nemico si cura di ${eVal} HP!`);
+            }
+
+            // Effetto Eroe sul Nemico
+            if (hSuit === SUITS.SPADE) {
+                let damage = Math.max(0, hVal - (eSuit === SUITS.DENARI ? eVal : 0));
+                enemyHp -= damage;
+                log(`Attacchi il Nemico infliggendo ${damage} danni!`);
+            } else if (hSuit === SUITS.COPPE) {
+                hero.hp = Math.min(hero.maxHp, hero.hp + hVal);
+                log(`Ti curi di ${hVal} HP!`);
+            }
+        }
+
+        function checkCombatStatus() {
+            if (enemyHp <= 0) {
+                log(`NEMICO SCONFIGGITO!`);
+                
+                // Se il nemico è un Re (valore 10) rilascia Reliquia
+                if (enemy.value === 10) {
+                    let rel = mazzoReliquie.find(r => r.suit === enemy.suit);
+                    if (rel) {
+                        reliquieOttenute.push(rel);
+                        log(`Hai conquistato la Reliquia di ${enemy.suit}!`);
+                    }
+                } else {
+                    carteAiuto.push(enemy);
+                    log(`Il Nemico sconfitto diventa una Carta Aiuto!`);
+                }
+
+                inCombattimento = false;
+                enemy = null;
+                carteAzioneEroe = [];
+                carteAzioneNemico = [];
+                
+                checkWinCondition();
+                endTurn();
+                return;
+            }
+
+            if (carteAzioneNemico.length === 0) {
+                log('Fine turno di combattimento. Inizio nuovo round...');
+                setupCombatTurn();
+            } else {
+                updateUI();
+            }
+        }
+
+        function checkGameOver() {
+            if (hero.hp <= 0) {
+                log('=== GAME OVER === L\'Eroe è stato sconfitto!');
+                document.getElementById('btn-draw').disabled = true;
+                document.getElementById('btn-roll').disabled = true;
+                document.getElementById('btn-pay-gold').disabled = true;
+                document.getElementById('btn-play-action').disabled = true;
+            }
+        }
+
+        function checkWinCondition() {
+            if (mode === 'Facile' && reliquieOttenute.length >= 4) {
+                log('★ VITTORIA SONTUOSA! ★ Hai conquistato tutte e 4 le Sacre Reliquie!');
+                document.getElementById('btn-draw').disabled = true;
+            }
         }
 
         function endTurn() {
-            document.getElementById('btn-draw').disabled = false;
-            document.getElementById('btn-roll').disabled = true;
+            if (!inCombattimento) {
+                cartaEventoCorrente = null;
+                document.getElementById('btn-draw').disabled = false;
+                document.getElementById('btn-roll').disabled = true;
+                document.getElementById('btn-pay-gold').disabled = true;
+                document.getElementById('btn-play-action').disabled = true;
+            }
             updateUI();
         }
 
