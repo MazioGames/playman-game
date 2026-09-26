@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ruba Dungeon - Dado Bianco con Puntini Neri</title>
+    <title>Ruba Dungeon - Carte Nemico Corrette</title>
     <style>
         :root {
             --bg-color: #1e1915;
@@ -183,7 +183,6 @@
             align-items: center;
             font-size: 0.55rem;
             text-align: center;
-            width: 100%;
         }
 
         .card.enemy-back {
@@ -194,7 +193,7 @@
             align-items: center;
             font-size: 0.55rem;
             text-align: center;
-            width: 100%;
+            width: 44px; /* Stessa dimensione delle carte eroe */
         }
 
         .card-val { font-size: 0.75rem; line-height: 1; }
@@ -563,11 +562,20 @@
             });
             document.getElementById('slot-hero-actions').innerHTML = heroActHTML;
 
+            // RENDER CARTE AZIONE NEMICO (Prime due coperte, terza visibile)
             let enemyActHTML = '';
             if (inCombattimento) {
-                carteAzioneNemico.forEach(() => {
-                    enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
+                carteAzioneNemico.forEach((card, index) => {
+                    // Se è tra le prime due carte, la mostriamo a dorso coperto
+                    if (index < 2) {
+                        enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
+                    } else {
+                        // La terza carta è mostrata a faccia in su visibile
+                        enemyActHTML += renderCardHTML(card);
+                    }
                 });
+                
+                // Se c'è un'ultima carta usata nel turno precedente, la mostriamo a fine fila
                 if (ultimaAzioneNemicoGiocata) {
                     enemyActHTML += renderCardHTML(ultimaAzioneNemicoGiocata, 'Usata');
                 }
@@ -811,6 +819,7 @@
             if (carteSelezionateEroe.length === 0 || carteAzioneNemico.length === 0) return;
 
             let heroCardsPlayed = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
+            // Viene usata la carta nemico aperta (la terza della mano)
             let enemyCardPlayed = carteAzioneNemico.pop();
             ultimaAzioneNemicoGiocata = enemyCardPlayed;
 
