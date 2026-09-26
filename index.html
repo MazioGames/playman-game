@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ruba Dungeon - Reliquie Scorrevoli & Combattimento Immediato</title>
+    <title>Ruba Dungeon - Pescata Diretta dal Dungeon</title>
     <style>
         :root {
             --bg-color: #1e1915;
@@ -196,12 +196,33 @@
             width: 44px;
         }
 
+        /* Effetti Mazzi Cliccabili */
+        .clickable-deck {
+            cursor: pointer;
+            animation: pulse-glow-enemy 1.5s infinite alternate;
+        }
+
+        @keyframes pulse-glow-enemy {
+            from { box-shadow: 0 0 4px #ff3333; }
+            to { box-shadow: 0 0 12px #ff8888; }
+        }
+
+        .dungeon-drawable {
+            cursor: pointer;
+            animation: pulse-glow-dungeon 1.5s infinite alternate;
+        }
+
+        @keyframes pulse-glow-dungeon {
+            from { box-shadow: 0 0 4px #d9a05b; }
+            to { box-shadow: 0 0 12px #ffd700; }
+        }
+
         .card-val { font-size: 0.75rem; line-height: 1; }
         .card-suit { font-size: 0.48rem; align-self: flex-end; text-transform: capitalize; }
 
         .span-2 { grid-column: span 2; }
 
-        /* DADO GRANDE NEL Riquadro Tra 9 e 10 */
+        /* DADO PIÙ GRANDE & SEMPRE BIANCO */
         .dice-slot {
             display: flex;
             flex-direction: column;
@@ -214,29 +235,29 @@
         }
 
         .dice-box {
-            width: 58px;
-            height: 58px;
-            background: linear-gradient(145deg, #ffffff, #e6e6e6);
-            border: 2px solid #111111;
-            border-radius: 12px;
+            width: 72px;
+            height: 72px;
+            background: #ffffff;
+            border: 2.5px solid #111111;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.8rem;
+            font-size: 3.6rem;
             line-height: 1;
             color: #111111;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 0 6px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 0 8px rgba(0,0,0,0.1);
             transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
         }
 
         .dice-slot.active .dice-box {
-            box-shadow: 0 0 12px var(--accent-color), 0 4px 8px rgba(0,0,0,0.6);
+            box-shadow: 0 0 14px var(--accent-color), 0 4px 10px rgba(0,0,0,0.6);
             border-color: var(--accent-color);
             opacity: 1;
         }
 
         .dice-slot.disabled .dice-box {
-            opacity: 0.45;
+            opacity: 0.5;
             cursor: not-allowed;
             box-shadow: none;
         }
@@ -245,7 +266,6 @@
             transform: scale(1.05);
         }
 
-        /* Animazione Rotazione 3D Dado */
         .dice-box.rolling {
             animation: dice-roll 0.6s cubic-bezier(0.25, 1, 0.5, 1);
         }
@@ -372,9 +392,9 @@
 
     <div class="board" id="game-board">
         <!-- RIGA 1 -->
-        <div class="slot"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon" class="card-container"></div></div>
+        <div class="slot" onclick="handleDungeonDeckClick()"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon" class="card-container"></div></div>
         <div class="slot"><span class="slot-title">2. Eventi Pila</span><div id="card-event" class="card-container"></div></div>
-        <div class="slot"><span class="slot-title">3. Personaggi</span><div id="deck-characters" class="card-container"></div></div>
+        <div class="slot" onclick="handleEnemyDeckClick()"><span class="slot-title">3. Nemici</span><div id="deck-characters" class="card-container"></div></div>
         <div class="slot"><span class="slot-title">4. Catacomba</span><div id="slot-catacomb" class="card-container"></div></div>
 
         <!-- RIGA 2 -->
@@ -409,7 +429,6 @@
 
     <div class="controls">
         <div class="btn-group">
-            <button id="btn-draw" onclick="drawEvent()">Pesca Evento</button>
             <button id="btn-pay-gold" onclick="paySelectedGold(false)" disabled>Evita (Oro)</button>
             <button id="btn-corrupt" onclick="paySelectedGold(true)" disabled>Corrompi</button>
         </div>
@@ -420,7 +439,7 @@
         </div>
     </div>
 
-    <div id="log">Tocca "Pesca Evento" per iniziare il Crawling!</div>
+    <div id="log">Tocca la casella "1. Dungeon" per pescare una carta evento!</div>
 
     <script>
         const SUITS = { BASTONI: 'Bastoni', COPPE: 'Coppe', DENARI: 'Denari', SPADE: 'Spade' };
@@ -454,6 +473,7 @@
         let inCombattimento = false;
         let isRollingDice = false;
         let diceEnabled = false;
+        let canDrawEvent = true;
         let nemiciSconfittiTotali = 0;
 
         function log(msg) {
@@ -512,7 +532,7 @@
             diceBox.innerText = '⚀';
             diceBox.classList.remove('rolling');
             
-            log(`Nuova partita iniziata (${mode})...`);
+            log(`Nuova partita iniziata (${mode})... Tocca il Mazzo Dungeon per pescare.`);
 
             let fullDeck = createDeck();
             shuffle(fullDeck);
@@ -544,6 +564,7 @@
             inCombattimento = false;
             isRollingDice = false;
             diceEnabled = false;
+            canDrawEvent = true;
             nemiciSconfittiTotali = 0;
 
             updateUI();
@@ -579,12 +600,16 @@
             document.getElementById('relic-count').innerText = `${reliquieOttenute.length}/4`;
             document.getElementById('defeated-count').innerText = `${nemiciSconfittiTotali}/11`;
 
-            document.getElementById('deck-dungeon').innerHTML = mazzoDungeon.length > 0 ? `<div class="card back">1. Dungeon<br>(${mazzoDungeon.length})</div>` : '';
+            // Mazzo Dungeon cliccabile quando si può pescare
+            document.getElementById('deck-dungeon').innerHTML = mazzoDungeon.length > 0 
+                ? `<div class="card back ${canDrawEvent && !inCombattimento ? 'dungeon-drawable' : ''}">1. Dungeon<br>(${mazzoDungeon.length})</div>` 
+                : '';
             
             let topEventCard = cartaEventoCorrente || (carteEventoPila.length > 0 ? carteEventoPila[carteEventoPila.length - 1] : null);
             document.getElementById('card-event').innerHTML = topEventCard ? renderCardHTML(topEventCard, `x${carteEventoPila.length + (cartaEventoCorrente ? 1 : 0)}`) : '';
 
-            document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card enemy-back">3. Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
+            let canFightManual = (cartaEventoCorrente && cartaEventoCorrente.suit === SUITS.SPADE && !inCombattimento);
+            document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card enemy-back ${canFightManual ? 'clickable-deck' : ''}">3. Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
             
             document.getElementById('slot-catacomb').innerHTML = catacomba.length > 0 ? `<div class="card enemy-back">4. Scarti<br>(${catacomba.length})</div>` : '';
 
@@ -636,7 +661,6 @@
             }
             document.getElementById('slot-enemy-actions').innerHTML = enemyActHTML;
 
-            // DISABILITATO DURANTE IL COMBATTIMENTO
             document.getElementById('btn-discard-action').disabled = inCombattimento || carteSelezionateEroe.length === 0;
 
             if (cartaEventoCorrente && !inCombattimento) {
@@ -679,9 +703,12 @@
             updateUI();
         }
 
-        function drawEvent() {
-            if (inCombattimento || isRollingDice) return;
+        function handleDungeonDeckClick() {
+            if (!canDrawEvent || inCombattimento || isRollingDice) return;
+            drawEvent();
+        }
 
+        function drawEvent() {
             if (cartaEventoCorrente && cartaEventoCorrente.suit === SUITS.DENARI) {
                 carteOro.push(cartaEventoCorrente);
                 cartaEventoCorrente = null;
@@ -693,31 +720,40 @@
             carteOroSelezionate = [];
             updateUI();
             
-            log(`Evento pescato sulla Casella Eventi: ${cartaEventoCorrente.value} di ${cartaEventoCorrente.suit}`);
+            log(`Evento pescato dal Mazzo Dungeon: ${cartaEventoCorrente.value} di ${cartaEventoCorrente.suit}`);
 
             let requiredGold = (mode === 'Difficile' && cartaEventoCorrente.suit === SUITS.SPADE) 
                 ? cartaEventoCorrente.value * 2 
                 : cartaEventoCorrente.value;
 
             if (cartaEventoCorrente.suit === SUITS.DENARI) {
-                log(`Trovata Carta Oro (+${cartaEventoCorrente.value})! Visibile su Casella Eventi, verrà aggiunta all'Oro.`);
-                document.getElementById('btn-draw').disabled = false;
+                log(`Trovata Carta Oro (+${cartaEventoCorrente.value})! Visibile su Casella Eventi, verrà aggiunta all'Oro. Tocca di nuovo il Mazzo Dungeon per proseguire.`);
+                canDrawEvent = true;
                 setDiceEnabled(false);
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
                 let totalGoldAvailable = getTotalGold();
                 setDiceEnabled(false);
 
                 if (totalGoldAvailable < requiredGold) {
-                    log(`Nemico ingaggiato! Nessun oro sufficiente per evitarlo/corromperlo (${totalGoldAvailable}/${requiredGold}). Entra direttamente in combattimento!`);
+                    log(`Nemico ingaggiato! Oro insufficiente (${totalGoldAvailable}/${requiredGold}). Si entra in combattimento!`);
+                    canDrawEvent = false;
                     startCombat();
                 } else {
-                    log(`Nemico avvistato! Seleziona Oro per Evitation (${requiredGold}) o Corrompere il nemico.`);
-                    document.getElementById('btn-draw').disabled = true;
+                    log(`Nemico avvistato! Paga Oro/Corrompi, OPPURE TOCCA IL MAZZO NEMICI per combattere direttamente!`);
+                    canDrawEvent = false;
                 }
             } else {
                 log(`Tocca il DADO per il Test o paga ${requiredGold} Oro.`);
-                document.getElementById('btn-draw').disabled = true;
+                canDrawEvent = false;
                 setDiceEnabled(true);
+            }
+            updateUI();
+        }
+
+        function handleEnemyDeckClick() {
+            if (cartaEventoCorrente && cartaEventoCorrente.suit === SUITS.SPADE && !inCombattimento) {
+                log('Hai scelto di affrontare il Nemico! Avvio Combattimento...');
+                startCombat();
             }
         }
 
@@ -807,7 +843,7 @@
                         enemyMaxHp = mode === 'Facile' ? 6 : 10;
                         enemyHp = enemyMaxHp;
                         inCombattimento = true;
-                        document.getElementById('btn-draw').disabled = true;
+                        canDrawEvent = false;
                         document.getElementById('btn-pay-gold').disabled = true;
                         document.getElementById('btn-corrupt').disabled = true;
                         setDiceEnabled(false);
@@ -830,6 +866,7 @@
             }
 
             inCombattimento = true;
+            canDrawEvent = false;
             enemy = mazzoPersonaggi.pop();
             
             enemyMaxHp = mode === 'Facile' ? 6 : (enemy.value === 8 ? 8 : enemy.value === 9 ? 9 : 10);
@@ -838,7 +875,6 @@
             let rankName = enemy.value === 8 ? 'Fante' : enemy.value === 9 ? 'Cavaliere' : 'Re';
             log(`ENTRI IN COMBATTIMENTO contro ${rankName}: ${enemy.value} di ${enemy.suit} (${enemyHp}/${enemyMaxHp} HP)!`);
 
-            document.getElementById('btn-draw').disabled = true;
             document.getElementById('btn-pay-gold').disabled = true;
             document.getElementById('btn-corrupt').disabled = true;
             setDiceEnabled(false);
@@ -1022,7 +1058,7 @@
                 updateUI();
                 log('☠ SCONFITTA! Il tuo eroe è caduto.');
                 document.getElementById('defeat-overlay').style.display = 'flex';
-                document.getElementById('btn-draw').disabled = true;
+                canDrawEvent = false;
                 document.getElementById('btn-pay-gold').disabled = true;
                 document.getElementById('btn-corrupt').disabled = true;
                 document.getElementById('btn-play-action').disabled = true;
@@ -1035,10 +1071,10 @@
         function checkWinCondition() {
             if (mode === 'Facile' && reliquieOttenute.length >= 4) {
                 log('🏆 VITTORIA! Hai collezionato le 4 Reliquie!');
-                document.getElementById('btn-draw').disabled = true;
+                canDrawEvent = false;
             } else if (mode === 'Difficile' && nemiciSconfittiTotali >= 11) {
                 log('🏆 VITTORIA TOTALE! Hai eliminato tutti i nemici!');
-                document.getElementById('btn-draw').disabled = true;
+                canDrawEvent = false;
             }
         }
 
@@ -1052,7 +1088,7 @@
                     }
                     cartaEventoCorrente = null;
                 }
-                document.getElementById('btn-draw').disabled = false;
+                canDrawEvent = true;
                 document.getElementById('btn-pay-gold').disabled = true;
                 document.getElementById('btn-corrupt').disabled = true;
                 document.getElementById('btn-play-action').disabled = true;
