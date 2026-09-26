@@ -42,27 +42,54 @@
 
         header {
             text-align: center;
-            height: 4vh;
+            height: 4.5vh;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 4px;
+            padding: 0 2px;
+            gap: 4px;
         }
 
         h1 {
             color: var(--accent-color);
-            font-size: 0.9rem;
-            letter-spacing: 1px;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
-        .mode-btn {
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .header-btn {
             background: #3e352b;
             color: var(--accent-color);
             border: 1px solid var(--accent-color);
-            padding: 2px 6px;
+            padding: 3px 6px;
             font-size: 0.65rem;
+            font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .header-btn.btn-action {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .header-btn.btn-post-combat {
+            background: #2e7d32;
+            color: #ffffff;
+            border-color: #00e676;
+            animation: pulse-post-combat 1.2s infinite alternate;
+        }
+
+        @keyframes pulse-post-combat {
+            from { box-shadow: 0 0 3px #00e676; }
+            to { box-shadow: 0 0 8px #00e676; }
         }
 
         .status-bar {
@@ -93,7 +120,7 @@
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(4, 1fr);
             gap: 3px;
-            height: 59vh;
+            height: 68vh;
             background: #2b221b;
             padding: 4px;
             border-radius: 8px;
@@ -156,22 +183,24 @@
 
         .hp-dice-group {
             display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 2px;
             margin-right: auto;
             padding-left: 2px;
         }
 
         .hp-dice {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             background: #ffffff;
             color: #111;
             border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.6);
             border: 1px solid #d9a05b;
@@ -238,9 +267,9 @@
             width: 44px;
         }
 
-        .clickable-deck {
+        .clickable-enemy-card {
             cursor: pointer;
-            animation: pulse-glow-enemy 1.5s infinite alternate;
+            animation: pulse-glow-enemy 1.2s infinite alternate;
         }
 
         @keyframes pulse-glow-enemy {
@@ -357,34 +386,8 @@
             100% { transform: rotate3d(0, 0, 0, 720deg) scale(1); }
         }
 
-        .controls {
-            height: 10vh;
-            display: flex;
-            gap: 3px;
-        }
-
-        button {
-            flex: 1;
-            height: 100%;
-            background-color: var(--primary-color);
-            color: white;
-            border: 1px solid var(--accent-color);
-            padding: 2px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        button:disabled {
-            background-color: #3d352e;
-            border-color: #555;
-            color: #777;
-            opacity: 0.6;
-        }
-
         #log {
-            height: 12vh;
+            height: 18vh;
             background: #120e0c;
             border: 1px solid #5c4d3c;
             border-radius: 4px;
@@ -450,7 +453,11 @@
 
     <header>
         <h1>★ Ruba Dungeon ★</h1>
-        <button id="btn-toggle-mode" class="mode-btn" onclick="toggleMode()">Modo: Facile</button>
+        <div class="header-actions">
+            <button id="btn-post-combat-header" class="header-btn btn-post-combat" onclick="confirmPostCombatSelection()" style="display: none;">Scarta / Continua</button>
+            <button id="btn-restart" class="header-btn btn-action" onclick="initGame()">Nuova Partita</button>
+            <button id="btn-toggle-mode" class="header-btn" onclick="toggleMode()">Modo: Facile</button>
+        </div>
     </header>
     
     <div class="status-bar">
@@ -493,14 +500,8 @@
         <div id="defeat-overlay" class="defeat-overlay" style="display: none;">
             <div class="defeat-title">☠ SCONFITTA ☠</div>
             <div class="defeat-msg">Il tuo Eroe è caduto nel Dungeon!</div>
-            <button onclick="initGame()" style="flex: none; padding: 8px 16px; font-size: 0.8rem;">Inizia Nuova Partita</button>
+            <button onclick="initGame()" class="header-btn btn-action" style="padding: 8px 16px; font-size: 0.8rem;">Inizia Nuova Partita</button>
         </div>
-    </div>
-
-    <div class="controls">
-        <button id="btn-play-action" onclick="playSelectedHeroCards()" disabled>Gioca Azione</button>
-        <button id="btn-confirm-post-combat" onclick="confirmPostCombatSelection()" disabled style="display: none;">Scarta / Continua</button>
-        <button id="btn-restart" onclick="initGame()">Nuova Partita</button>
     </div>
 
     <div id="log">Tocca la casella "1. Dungeon" per pescare una carta evento!</div>
@@ -697,11 +698,11 @@
 
             // Mazzo Nemici
             let canFightManual = (cartaEventoCorrente && cartaEventoCorrente.suit === SUITS.SPADE && !inCombattimento && !fasePostCombattimento);
-            document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card enemy-back ${canFightManual ? 'clickable-deck' : ''}">3. Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
+            document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card enemy-back ${canFightManual ? 'clickable-enemy-card' : ''}">3. Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
             
             document.getElementById('slot-catacomb').innerHTML = catacomba.length > 0 ? `<div class="card enemy-back">4. Scarti<br>(${catacomba.length})</div>` : '';
 
-            // Slot Nemico (con dado D6 a sinistra)
+            // Slot Nemico
             let enemyDiceVal = Math.max(1, Math.min(6, enemyHp || 1));
             let enemyDiceHTML = enemy ? `
                 <div class="hp-dice-group">
@@ -715,7 +716,7 @@
             });
             document.getElementById('slot-relics').innerHTML = relicsHTML;
 
-            // Slot Eroe (con 2 dadi D6 HP a sinistra)
+            // Slot Eroe
             let currentHeroHp = Math.max(0, hero.hp);
             let d1 = Math.min(6, currentHeroHp);
             let d2 = Math.max(0, currentHeroHp - 6);
@@ -773,7 +774,8 @@
             if (inCombattimento) {
                 carteAzioneNemico.forEach((card, index) => {
                     if (index === carteAzioneNemico.length - 1) {
-                        enemyActHTML += renderCardHTML(card);
+                        let isClickable = carteSelezionateEroe.length > 0 ? 'clickable-enemy-card' : '';
+                        enemyActHTML += `<div class="card enemy-back ${isClickable}" onclick="handleEnemyCardClick()">Nemico</div>`;
                     } else {
                         enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
                     }
@@ -785,19 +787,13 @@
             }
             document.getElementById('slot-enemy-actions').innerHTML = enemyActHTML;
 
-            // Pulsanti di gioco
-            let btnPlay = document.getElementById('btn-play-action');
-            let btnConfirm = document.getElementById('btn-confirm-post-combat');
-
+            // Pulsante Post-Combattimento nell'Header
+            let btnPostCombatHeader = document.getElementById('btn-post-combat-header');
             if (fasePostCombattimento) {
-                btnPlay.style.display = 'none';
-                btnConfirm.style.display = 'block';
-                btnConfirm.disabled = false;
-                btnConfirm.innerText = carteSelezionateEroe.length > 0 ? `Scarta (${carteSelezionateEroe.length}) & Continua` : 'Continua Dungeon';
+                btnPostCombatHeader.style.display = 'block';
+                btnPostCombatHeader.innerText = carteSelezionateEroe.length > 0 ? `Scarta (${carteSelezionateEroe.length}) & Continua` : 'Continua';
             } else {
-                btnPlay.style.display = 'block';
-                btnConfirm.style.display = 'none';
-                btnPlay.disabled = !inCombattimento || carteSelezionateEroe.length === 0;
+                btnPostCombatHeader.style.display = 'none';
             }
         }
 
@@ -890,7 +886,6 @@
             }
         }
 
-        // Gestione Risoluzione Coppe / Bastoni tramite Carte Oro selezionate
         function handleNonCombatEventWithGold() {
             if (!cartaEventoCorrente || inCombattimento || isRollingDice) return;
             if (cartaEventoCorrente.suit !== SUITS.COPPE && cartaEventoCorrente.suit !== SUITS.BASTONI) return;
@@ -1053,6 +1048,7 @@
 
             ultimaAzioneNemicoGiocata = null;
             carteSelezionateEroe = [];
+            log('Seleziona la tua Carta Azione Eroe, poi tocca la Carta Nemico coperta per giocare!');
             updateUI();
         }
 
@@ -1087,6 +1083,17 @@
                 }
             }
             updateUI();
+        }
+
+        function handleEnemyCardClick() {
+            if (!inCombattimento) return;
+
+            if (carteSelezionateEroe.length === 0) {
+                log('Seleziona prima una tua Carta Azione Eroe da giocare!');
+                return;
+            }
+
+            playSelectedHeroCards();
         }
 
         function confirmPostCombatSelection() {
@@ -1133,7 +1140,7 @@
             let enemyTotalValue = enemyCardPlayed.value + enemyBonus;
 
             log(`Eroe gioca ${chosenSuit} (Totale: ${heroTotalValue}${relicBonus ? ` +${relicBonus} Reliquia` : ''})`);
-            log(`Nemico gioca ${enemyCardPlayed.suit} (Totale: ${enemyTotalValue})`);
+            log(`Nemico rivela ${enemyCardPlayed.suit} (Totale: ${enemyTotalValue})`);
 
             resolveCombatExchange(chosenSuit, heroTotalValue, enemyCardPlayed.suit, enemyTotalValue);
 
@@ -1216,7 +1223,7 @@
 
                 fasePostCombattimento = true;
                 carteSelezionateEroe = [];
-                log(`Nemico battuto! Seleziona le Carte Azione Eroe da scartare nella Pila Eventi, poi premi "Scarta / Continua".`);
+                log(`Nemico battuto! Seleziona le Carte Azione Eroe da scartare nella Pila Eventi, poi premi "Scarta / Continua" in alto.`);
                 updateUI();
                 return;
             }
