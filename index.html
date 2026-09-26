@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ruba Dungeon - Versione Completa</title>
+    <title>Ruba Dungeon - Versione Aggiornata</title>
     <style>
         :root {
             --bg-color: #1e1915;
@@ -136,12 +136,13 @@
             align-items: center;
             justify-content: center;
             padding-top: 6px;
+            overflow-x: auto;
         }
 
         .card {
             width: 100%;
             height: 85%;
-            max-width: 60px;
+            max-width: 50px;
             background-color: var(--card-bg);
             color: var(--text-color);
             border-radius: 4px;
@@ -154,6 +155,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.5);
             cursor: pointer;
             transition: transform 0.1s, border-color 0.1s;
+            flex-shrink: 0;
         }
 
         .card.selected {
@@ -206,7 +208,7 @@
             color: white;
             border: 1px solid var(--accent-color);
             padding: 2px;
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
@@ -286,13 +288,12 @@
         <div class="btn-group">
             <button id="btn-draw" onclick="drawEvent()">Pesca Evento</button>
             <button id="btn-roll" onclick="rollDiceTest()" disabled>Lancia 1D6</button>
-            <button id="btn-pay-gold" onclick="payGoldForEvent(false)" disabled>Evita (Oro)</button>
-            <button id="btn-corrupt" onclick="payGoldForEvent(true)" disabled>Corrompi</button>
+            <button id="btn-pay-gold" onclick="paySelectedGold(false)" disabled>Evita (Oro)</button>
+            <button id="btn-corrupt" onclick="paySelectedGold(true)" disabled>Corrompi</button>
         </div>
         <div class="btn-group">
             <button id="btn-play-action" onclick="playSelectedHeroCards()" disabled>Gioca Azione</button>
             <button id="btn-discard-action" onclick="discardSelectedHeroCards()" disabled>Scarta Carte</button>
-            <button id="btn-use-aid" onclick="toggleAidSelection()" disabled>Usa Aiuto</button>
             <button id="btn-restart" onclick="initGame()">Nuova Partita</button>
         </div>
     </div>
@@ -305,6 +306,7 @@
         let hero = { hp: 12, maxHp: 12, card: null };
         let enemy = null;
         let enemyHp = 0;
+        let enemyMaxHp = 0;
         let mode = 'Facile';
         
         let mazzoDungeon = [];
@@ -315,13 +317,15 @@
         
         let cartaEventoCorrente = null;
         let carteOro = [];
+        let carteOroSelezionate = [];
         let reliquieOttenute = [];
+        
         let carteAiuto = [];
+        let carteAiutoSelezionate = [];
 
         let carteAzioneEroe = [];
         let carteAzioneNemico = [];
         let carteSelezionateEroe = [];
-        let usaCartaAiutoAttiva = false;
 
         let inCombattimento = false;
         let nemiciSconfittiTotali = 0;
@@ -360,6 +364,20 @@
             }
         }
 
+        function checkAndReplenishDungeonDeck() {
+            if (mazzoDungeon.length === 0) {
+                if (catacomba.length === 0) {
+                    log('Nessuna carta rimasta nella Catacomba per ricostruire il Mazzo Dungeon!');
+                    return false;
+                }
+                log('Mazzo Dungeon esaurito! Rimescolo le carte dalla Catacomba (4) per ricreare il Mazzo Dungeon (1)...');
+                mazzoDungeon = [...catacomba];
+                catacomba = [];
+                shuffle(mazzoDungeon);
+            }
+            return true;
+        }
+
         function initGame() {
             document.getElementById('log').innerHTML = '';
             log(`Nuova partita iniziata (${mode})...`);
@@ -381,8 +399,10 @@
             carteEventoPila = [];
             catacomba = [];
             carteOro = [];
+            carteOroSelezionate = [];
             reliquieOttenute = [];
             carteAiuto = [];
+            carteAiutoSelezionate = [];
             carteAzioneEroe = [];
             carteAzioneNemico = [];
             carteSelezionateEroe = [];
@@ -399,9 +419,15 @@
             return carteOro.reduce((sum, card) => sum + card.value, 0);
         }
 
+        function getSelectedGoldValue() {
+            return carteOro
+                .filter(c => carteOroSelezionate.includes(c.id))
+                .reduce((sum, c) => sum + c.value, 0);
+        }
+
         function updateUI() {
             document.getElementById('hero-hp').innerText = `${hero.hp}/12`;
-            document.getElementById('enemy-hp').innerText = enemy ? `${enemyHp}` : '-';
+            document.getElementById('enemy-hp').innerText = enemy ? `${enemyHp}/${enemyMaxHp}` : '-';
             document.getElementById('gold-count').innerText = getTotalGold();
             document.getElementById('relic-count').innerText = `${reliquieOttenute.length}/4`;
             document.getElementById('defeated-count').innerText = `${nemiciSconfittiTotali}/11`;
@@ -414,11 +440,25 @@
             document.getElementById('slot-enemy').innerHTML = enemy ? renderCardHTML(enemy) : '';
             document.getElementById('slot-relics').innerHTML = reliquieOttenute.length > 0 ? renderCardHTML(reliquieOttenute[reliquieOttenute.length - 1], `x${reliquieOttenute.length}`) : '';
             document.getElementById('slot-hero').innerHTML = renderCardHTML(hero.card);
-            
-            document.getElementById('slot-gold').innerHTML = carteOro.length > 0 ? renderCardHTML(carteOro[carteOro.length - 1], `x${carteOro.length}`) : '';
-            document.getElementById('slot-aids').innerHTML = carteAiuto.length > 0 ? renderCardHTML(carteAiuto[carteAiuto.length - 1], `x${carteAiuto.length}`) : '';
             document.getElementById('deck-relics').innerHTML = mazzoReliquie.length > 0 ? `<div class="card back">10. Reliquie<br>(${mazzoReliquie.length})</div>` : '';
 
+            // Slot Oro con possibilità di selezione singola carta
+            let goldHTML = '';
+            carteOro.forEach(card => {
+                let isSel = carteOroSelezionate.includes(card.id);
+                goldHTML += renderCardHTML(card, '', isSel, `toggleSelectGold('${card.id}')`);
+            });
+            document.getElementById('slot-gold').innerHTML = goldHTML;
+
+            // Slot Aiuti con selezione singola/multipla
+            let aidHTML = '';
+            carteAiuto.forEach(card => {
+                let isSel = carteAiutoSelezionate.includes(card.id);
+                aidHTML += renderCardHTML(card, '', isSel, `toggleSelectAid('${card.id}')`);
+            });
+            document.getElementById('slot-aids').innerHTML = aidHTML;
+
+            // Render Azioni Eroe
             let heroActHTML = '';
             carteAzioneEroe.forEach((card) => {
                 let isSel = carteSelezionateEroe.includes(card.id);
@@ -426,6 +466,7 @@
             });
             document.getElementById('slot-hero-actions').innerHTML = heroActHTML;
 
+            // Render Azioni Nemico
             let enemyActHTML = '';
             carteAzioneNemico.forEach((card, idx) => {
                 if (idx === carteAzioneNemico.length - 1) {
@@ -435,10 +476,19 @@
                 }
             });
             document.getElementById('slot-enemy-actions').innerHTML = enemyActHTML;
-            
-            document.getElementById('btn-use-aid').disabled = !inCombattimento || carteAiuto.length === 0;
-            document.getElementById('btn-use-aid').style.borderColor = usaCartaAiutoAttiva ? '#00e676' : 'var(--accent-color)';
+
             document.getElementById('btn-discard-action').disabled = carteSelezionateEroe.length === 0;
+
+            // Aggiornamento stato pulsanti Oro se carta evento attiva
+            if (cartaEventoCorrente && !inCombattimento) {
+                let selectedVal = getSelectedGoldValue();
+                let requiredGold = (mode === 'Difficile' && cartaEventoCorrente.suit === SUITS.SPADE) 
+                    ? cartaEventoCorrente.value * 2 
+                    : cartaEventoCorrente.value;
+
+                document.getElementById('btn-pay-gold').disabled = selectedVal < requiredGold;
+                document.getElementById('btn-corrupt').disabled = (cartaEventoCorrente.suit !== SUITS.SPADE) || (selectedVal <= requiredGold);
+            }
         }
 
         function renderCardHTML(card, badge = '', isSelected = false, clickFn = '') {
@@ -452,21 +502,31 @@
             `;
         }
 
+        function toggleSelectGold(id) {
+            if (carteOroSelezionate.includes(id)) {
+                carteOroSelezionate = carteOroSelezionate.filter(i => i !== id);
+            } else {
+                carteOroSelezionate.push(id);
+            }
+            updateUI();
+        }
+
+        function toggleSelectAid(id) {
+            if (carteAiutoSelezionate.includes(id)) {
+                carteAiutoSelezionate = carteAiutoSelezionate.filter(i => i !== id);
+            } else {
+                carteAiutoSelezionate.push(id);
+            }
+            updateUI();
+        }
+
         function drawEvent() {
             if (inCombattimento) return;
 
-            if (mazzoDungeon.length === 0) {
-                if (carteEventoPila.length === 0) {
-                    log('Nessuna carta rimasta per ricostruire il Dungeon!');
-                    return;
-                }
-                log('Mazzo Dungeon esaurito! Rimescolo le Carte Evento (2) per ricreare il Mazzo Dungeon (1)...');
-                mazzoDungeon = [...carteEventoPila];
-                carteEventoPila = [];
-                shuffle(mazzoDungeon);
-            }
+            if (!checkAndReplenishDungeonDeck()) return;
 
             cartaEventoCorrente = mazzoDungeon.pop();
+            carteOroSelezionate = [];
             updateUI();
             
             log(`Evento pescato: ${cartaEventoCorrente.value} di ${cartaEventoCorrente.suit}`);
@@ -481,13 +541,10 @@
                 log(`Oro ottenuto (+${cartaEventoCorrente.value})!`);
                 endTurn(false);
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
-                log(`Nemico avvistato! Costo evitamento: ${requiredGold} Oro.`);
-                document.getElementById('btn-pay-gold').disabled = getTotalGold() < requiredGold;
-                document.getElementById('btn-corrupt').disabled = getTotalGold() <= requiredGold;
+                log(`Nemico avvistato! Seleziona almeno ${requiredGold} Oro per evitarlo o più oro per Corromperlo.`);
                 document.getElementById('btn-roll').disabled = false;
             } else {
-                document.getElementById('btn-pay-gold').disabled = getTotalGold() < requiredGold;
-                document.getElementById('btn-corrupt').disabled = true;
+                log(`Seleziona ${requiredGold} Oro per superare l'evento o lancia 1D6.`);
                 document.getElementById('btn-roll').disabled = false;
             }
         }
@@ -516,7 +573,7 @@
                 let damage = Math.floor(vce / 2);
                 if (cartaEventoCorrente.suit === SUITS.BASTONI || cartaEventoCorrente.suit === SUITS.COPPE) {
                     hero.hp -= damage;
-                    log(`Danni subiti: ${damage} (VCE/2 arrotondato per difetto). HP: ${hero.hp}`);
+                    log(`Danni subiti: ${damage}. HP: ${hero.hp}`);
                 }
             }
 
@@ -524,28 +581,23 @@
             endTurn(true);
         }
 
-        function payGoldForEvent(isCorruption = false) {
+        function paySelectedGold(isCorruption = false) {
             let vce = cartaEventoCorrente.value;
             let requiredGold = (mode === 'Difficile' && cartaEventoCorrente.suit === SUITS.SPADE) ? vce * 2 : vce;
+            let paidValue = getSelectedGoldValue();
 
-            if (isCorruption) {
-                requiredGold += 1; // Spendiamo più dell'oro richiesto per tentare la corruzione
-            }
+            if (paidValue < requiredGold || (isCorruption && paidValue <= requiredGold)) return;
 
-            if (getTotalGold() < requiredGold) return;
+            // Spostiamo le carte oro selezionate nella Catacomba
+            let selectedCards = carteOro.filter(c => carteOroSelezionate.includes(c.id));
+            carteOro = carteOro.filter(c => !carteOroSelezionate.includes(c.id));
+            catacomba.push(...selectedCards);
+            carteOroSelezionate = [];
 
-            let paid = 0;
-            while (paid < requiredGold && carteOro.length > 0) {
-                let card = carteOro.pop();
-                paid += card.value;
-                catacomba.push(card);
-            }
-
-            log(`Spesi ${paid} Oro.`);
+            log(`Spesi ${paidValue} Oro selezionati.`);
 
             if (cartaEventoCorrente.suit === SUITS.SPADE) {
                 if (isCorruption) {
-                    // Tentativo di Corruzione (Svela il Nemico prima di combattere)
                     if (mazzoPersonaggi.length === 0) {
                         log('Nessun nemico rimasto!');
                         endTurn(true);
@@ -556,14 +608,15 @@
 
                     if (candidateEnemy.value === 8 || candidateEnemy.value === 9) {
                         carteAiuto.push(candidateEnemy);
-                        log(`★ CORRUZIONE RIUSCITA! ★ Il nemico si unisce a te come Carta Aiuto (9)!`);
+                        log(`★ CORRUZIONE RIUSCITA! ★ Il nemico si unisce a te come Carta Aiuto!`);
                         nemiciSconfittiTotali++;
                         endTurn(true);
                         return;
                     } else {
                         log(`☠ CORRUZIONE FALLITA! Il Re (10) è INCORRUTTIBILE! L'oro speso è perso e devi combattere!`);
                         enemy = candidateEnemy;
-                        enemyHp = mode === 'Facile' ? 6 : 10;
+                        enemyMaxHp = mode === 'Facile' ? 6 : 10;
+                        enemyHp = enemyMaxHp;
                         inCombattimento = true;
                         document.getElementById('btn-draw').disabled = true;
                         document.getElementById('btn-roll').disabled = true;
@@ -573,7 +626,7 @@
                         return;
                     }
                 } else {
-                    log('Combattimento evitato pagando l\'oro esatto.');
+                    log('Combattimento evitato pagando l\'oro selezionato.');
                 }
             }
 
@@ -590,14 +643,11 @@
             inCombattimento = true;
             enemy = mazzoPersonaggi.pop();
             
-            if (mode === 'Facile') {
-                enemyHp = 6;
-            } else {
-                enemyHp = enemy.value === 8 ? 8 : enemy.value === 9 ? 9 : 10;
-            }
+            enemyMaxHp = mode === 'Facile' ? 6 : (enemy.value === 8 ? 8 : enemy.value === 9 ? 9 : 10);
+            enemyHp = enemyMaxHp;
 
             let rankName = enemy.value === 8 ? 'Fante' : enemy.value === 9 ? 'Cavaliere' : 'Re';
-            log(`ENTRI IN COMBATTIMENTO contro ${rankName}: ${enemy.value} di ${enemy.suit} (${enemyHp} HP)!`);
+            log(`ENTRI IN COMBATTIMENTO contro ${rankName}: ${enemy.value} di ${enemy.suit} (${enemyHp}/${enemyMaxHp} HP)!`);
 
             document.getElementById('btn-draw').disabled = true;
             document.getElementById('btn-roll').disabled = true;
@@ -608,17 +658,18 @@
         }
 
         function setupCombatTurn() {
-            while (carteAzioneEroe.length < 3 && mazzoDungeon.length > 0) {
+            while (carteAzioneEroe.length < 3) {
+                if (!checkAndReplenishDungeonDeck()) break;
                 carteAzioneEroe.push(mazzoDungeon.pop());
             }
 
             carteAzioneNemico = [];
-            for (let i = 0; i < 3 && mazzoDungeon.length > 0; i++) {
+            for (let i = 0; i < 3; i++) {
+                if (!checkAndReplenishDungeonDeck()) break;
                 carteAzioneNemico.push(mazzoDungeon.pop());
             }
 
             carteSelezionateEroe = [];
-            usaCartaAiutoAttiva = false;
             document.getElementById('btn-play-action').disabled = false;
             updateUI();
         }
@@ -654,13 +705,6 @@
             updateUI();
         }
 
-        function toggleAidSelection() {
-            if (carteAiuto.length === 0) return;
-            usaCartaAiutoAttiva = !usaCartaAiutoAttiva;
-            log(usaCartaAiutoAttiva ? 'Carta Aiuto pronta (+1 al seme giocate)!' : 'Carta Aiuto deselezionata.');
-            updateUI();
-        }
-
         function playSelectedHeroCards() {
             if (carteSelezionateEroe.length === 0 || carteAzioneNemico.length === 0) return;
 
@@ -671,19 +715,19 @@
             let heroBaseValue = heroCardsPlayed.reduce((sum, c) => sum + c.value, 0);
             
             let relicBonus = reliquieOttenute.filter(r => r.suit === chosenSuit).length;
-            let aidBonus = 0;
+            
+            // Calcolo Bonus Carte Aiuto Selezionate
+            let selectedAids = carteAiuto.filter(a => carteAiutoSelezionate.includes(a.id));
+            let matchingAids = selectedAids.filter(a => a.suit === chosenSuit);
+            let aidBonus = matchingAids.length;
 
-            if (usaCartaAiutoAttiva && carteAiuto.length > 0) {
-                let aidIndex = carteAiuto.findIndex(a => a.suit === chosenSuit);
-                if (aidIndex !== -1) {
-                    let usedAid = carteAiuto.splice(aidIndex, 1)[0];
-                    aidBonus = 1;
-                    log(`Usata Carta Aiuto di ${chosenSuit} (+1)!`);
-                    catacomba.push(usedAid);
-                } else {
-                    log(`Nessuna carta Aiuto attiva per il seme ${chosenSuit}.`);
-                }
+            if (aidBonus > 0) {
+                // Rimuoviamo le carte aiuto usate e le mandiamo nella catacomba
+                carteAiuto = carteAiuto.filter(a => !matchingAids.map(m => m.id).includes(a.id));
+                catacomba.push(...matchingAids);
+                log(`Usate ${aidBonus} Carte Aiuto di ${chosenSuit} (+${aidBonus})!`);
             }
+            carteAiutoSelezionate = [];
 
             let heroTotalValue = heroBaseValue + relicBonus + aidBonus;
             let enemyBonus = (mode === 'Difficile' && enemy.value === 10 && enemyCardPlayed.suit === enemy.suit) ? 1 : 0;
@@ -696,7 +740,6 @@
 
             carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
             carteSelezionateEroe = [];
-            usaCartaAiutoAttiva = false;
             catacomba.push(enemyCardPlayed, ...heroCardsPlayed);
 
             checkGameOver();
@@ -704,10 +747,11 @@
         }
 
         function resolveCombatExchange(hSuit, hVal, eSuit, eVal) {
+            // Parata (Bastoni vs Bastoni)
             if (hSuit === SUITS.BASTONI && eSuit === SUITS.BASTONI) {
                 let diff = hVal - eVal;
                 if (diff > 0) {
-                    enemyHp -= diff;
+                    enemyHp = Math.max(0, enemyHp - diff);
                     log(`Parata perfetta! Contropiedi e infliggi ${diff} danni!`);
                 } else if (diff < 0) {
                     hero.hp -= Math.abs(diff);
@@ -718,19 +762,22 @@
                 return;
             }
 
+            // Attacco del Nemico
             if (eSuit === SUITS.SPADE) {
                 let damage = Math.max(0, eVal - (hSuit === SUITS.DENARI ? hVal : 0));
                 hero.hp -= damage;
                 log(`L'attacco del Nemico ti infligge ${damage} danni.`);
             } else if (eSuit === SUITS.COPPE) {
-                enemyHp = Math.min(10, enemyHp + eVal);
-                log(`Il Nemico usa Coppe e si cura di ${eVal} HP!`);
+                // Il nemico non può superare il suo HP massimo
+                enemyHp = Math.min(enemyMaxHp, enemyHp + eVal);
+                log(`Il Nemico usa Coppe e si cura. HP Nemico: ${enemyHp}/${enemyMaxHp}`);
             }
 
-            if (hSuit === SUITS.SPADE) {
+            // Attacco dell'Eroe (Spade o Bastoni infliggono danni)
+            if (hSuit === SUITS.SPADE || hSuit === SUITS.BASTONI) {
                 let damage = Math.max(0, hVal - (eSuit === SUITS.DENARI ? eVal : 0));
-                enemyHp -= damage;
-                log(`Attacchi e infliggi ${damage} danni al Nemico!`);
+                enemyHp = Math.max(0, enemyHp - damage);
+                log(`Attacchi con ${hSuit} e infliggi ${damage} danni al Nemico!`);
             } else if (hSuit === SUITS.COPPE) {
                 hero.hp = Math.min(hero.maxHp, hero.hp + hVal);
                 log(`Usi una carta Coppa e ti curi di ${hVal} HP!`);
@@ -751,11 +798,11 @@
                     }
                 } else {
                     carteAiuto.push(enemy);
-                    log(`Il nemico diventa una Carta Aiuto (9).`);
+                    log(`Il nemico diventa una Carta Aiuto.`);
                 }
 
                 if (cartaEventoCorrente) {
-                    carteEventoPila.push(cartaEventoCorrente);
+                    catacomba.push(cartaEventoCorrente);
                     cartaEventoCorrente = null;
                 }
 
@@ -800,7 +847,7 @@
         function endTurn(discardEvent = true) {
             if (!inCombattimento) {
                 if (discardEvent && cartaEventoCorrente) {
-                    carteEventoPila.push(cartaEventoCorrente);
+                    catacomba.push(cartaEventoCorrente);
                     cartaEventoCorrente = null;
                 }
                 document.getElementById('btn-draw').disabled = false;
