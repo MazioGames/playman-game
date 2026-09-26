@@ -780,11 +780,7 @@
                     if (card.revealed) {
                         enemyActHTML += renderCardHTML(card, 'Svelata', false, isTopTargetCard ? 'handleEnemyCardClick()' : '', '', isClickableClass);
                     } else {
-                        if (isTopTargetCard) {
-                            enemyActHTML += `<div class="card enemy-back ${isClickableClass}" onclick="handleEnemyCardClick()">Nemico</div>`;
-                        } else {
-                            enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
-                        }
+                        enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
                     }
                 });
                 
@@ -862,7 +858,7 @@
                 }
 
                 let candidateEnemy = mazzoPersonaggi.pop();
-                log(`Corruzione directa su: ${candidateEnemy.value} di ${candidateEnemy.suit}...`);
+                log(`Corruzione diretta su: ${candidateEnemy.value} di ${candidateEnemy.suit}...`);
 
                 if (candidateEnemy.value === 8 || candidateEnemy.value === 9) {
                     carteAiuto.push(candidateEnemy);
@@ -1061,6 +1057,16 @@
             setupCombatTurn();
         }
 
+        function revealTopEnemyAction() {
+            if (carteAzioneNemico.length > 0) {
+                let topCard = carteAzioneNemico[carteAzioneNemico.length - 1];
+                if (!topCard.revealed) {
+                    topCard.revealed = true;
+                    log(`Carta Azione del Nemico svelata: ${topCard.value} di ${topCard.suit}!`);
+                }
+            }
+        }
+
         function setupCombatTurn() {
             while (carteAzioneEroe.length < 3) {
                 if (!checkAndReplenishDungeonDeck()) break;
@@ -1075,15 +1081,12 @@
                 carteAzioneNemico.push(c);
             }
 
-            // Svela la terza carta azione del nemico
-            if (carteAzioneNemico.length >= 3) {
-                carteAzioneNemico[2].revealed = true;
-                log(`La 3ª Carta Azione del Nemico è svelata: ${carteAzioneNemico[2].value} di ${carteAzioneNemico[2].suit}!`);
-            }
+            // Svela SOLO la prima carta azione in cima
+            revealTopEnemyAction();
 
             ultimaAzioneNemicoGiocata = null;
             carteSelezionateEroe = [];
-            log('Seleziona la tua Carta Azione Eroe, poi tocca la Carta Nemico per giocare!');
+            log('Seleziona la tua Carta Azione Eroe, poi tocca la Carta Nemico svelata per giocare!');
             updateUI();
         }
 
@@ -1160,7 +1163,7 @@
             let enemyTotalValue = enemyCardPlayed.value + enemyBonus;
 
             log(`Eroe gioca ${chosenSuit} (Totale: ${heroTotalValue}${relicBonus ? ` +${relicBonus} Reliquia` : ''})`);
-            log(`Nemico rivela ${enemyCardPlayed.suit} (Totale: ${enemyTotalValue})`);
+            log(`Nemico gioca ${enemyCardPlayed.suit} (Totale: ${enemyTotalValue})`);
 
             resolveCombatExchange(chosenSuit, heroTotalValue, enemyCardPlayed.suit, enemyTotalValue);
 
@@ -1170,6 +1173,10 @@
             carteEventoPila.push(enemyCardPlayed, ...heroCardsPlayed);
 
             if (checkGameOver()) return;
+            
+            // Svela la carta successiva del nemico, se ce n'è una
+            revealTopEnemyAction();
+
             checkCombatStatus();
         }
 
