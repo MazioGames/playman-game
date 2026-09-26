@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ruba Dungeon - Versione Aggiornata</title>
+    <title>Ruba Dungeon - Regole Mazzi Aggiornate</title>
     <style>
         :root {
             --bg-color: #1e1915;
@@ -143,7 +143,6 @@
             scroll-behavior: smooth;
         }
 
-        /* Personalizzazione Scrollbar Carte Oro / Aiuti */
         .card-container::-webkit-scrollbar {
             height: 3px;
         }
@@ -237,7 +236,6 @@
             opacity: 0.6;
         }
 
-        /* Area Dado Grafico */
         .dice-display {
             width: 42px;
             height: 100%;
@@ -284,7 +282,6 @@
             text-align: center;
         }
 
-        /* Overlay di Sconfitta */
         .defeat-overlay {
             position: absolute;
             top: 0;
@@ -343,7 +340,7 @@
     <div class="board" id="game-board">
         <!-- RIGA 1 -->
         <div class="slot"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon" class="card-container"></div></div>
-        <div class="slot"><span class="slot-title">2. Evento</span><div id="card-event" class="card-container"></div></div>
+        <div class="slot"><span class="slot-title">2. Eventi Pila</span><div id="card-event" class="card-container"></div></div>
         <div class="slot"><span class="slot-title">3. Personaggi</span><div id="deck-characters" class="card-container"></div></div>
         <div class="slot"><span class="slot-title">4. Catacomba</span><div id="slot-catacomb" class="card-container"></div></div>
 
@@ -363,7 +360,6 @@
         <div class="slot empty"></div>
         <div class="slot"><span class="slot-title">10. Mazzo Reliquie</span><div id="deck-relics" class="card-container"></div></div>
         
-        <!-- Overlay Sconfitta Dynamico -->
         <div id="defeat-overlay" class="defeat-overlay" style="display: none;">
             <div class="defeat-title">☠ SCONFITTA ☠</div>
             <div class="defeat-msg">Il tuo Eroe è caduto nel Dungeon!</div>
@@ -376,7 +372,6 @@
             <button id="btn-draw" onclick="drawEvent()">Pesca Evento</button>
             <button id="btn-roll" onclick="rollDiceTest()" disabled>Lancia 1D6</button>
             
-            <!-- Box Grafico Dado Spazio Libero -->
             <div class="dice-display">
                 <span class="dice-label">Dado</span>
                 <span id="dice-result">-</span>
@@ -396,7 +391,7 @@
 
     <script>
         const SUITS = { BASTONI: 'Bastoni', COPPE: 'Coppe', DENARI: 'Denari', SPADE: 'Spade' };
-        const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅']; // Faccette del dado Unicode
+        const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
         
         let hero = { hp: 12, maxHp: 12, card: null };
         let enemy = null;
@@ -407,8 +402,8 @@
         let mazzoDungeon = [];
         let mazzoPersonaggi = [];
         let mazzoReliquie = [];
-        let carteEventoPila = [];
-        let catacomba = [];
+        let carteEventoPila = []; // Pila delle carte evento e usate
+        let catacomba = [];       // Solo Nemici sconfitti o arruolati
         
         let cartaEventoCorrente = null;
         let carteOro = [];
@@ -459,15 +454,16 @@
             }
         }
 
+        // Rimescola le carte dalla Pila Eventi (Casella 2) se il Mazzo Dungeon è vuoto
         function checkAndReplenishDungeonDeck() {
             if (mazzoDungeon.length === 0) {
-                if (catacomba.length === 0) {
-                    log('Nessuna carta rimasta nella Catacomba per ricostruire il Mazzo Dungeon!');
+                if (carteEventoPila.length === 0) {
+                    log('Nessuna carta rimasta per ricostruire il Mazzo Dungeon!');
                     return false;
                 }
-                log('Mazzo Dungeon esaurito! Rimescolo le carte dalla Catacomba (4) per ricreare il Mazzo Dungeon (1)...');
-                mazzoDungeon = [...catacomba];
-                catacomba = [];
+                log('Mazzo Dungeon esaurito! Rimescolo la Pila Eventi (2) per ricreare il Mazzo Dungeon (1)...');
+                mazzoDungeon = [...carteEventoPila];
+                carteEventoPila = [];
                 shuffle(mazzoDungeon);
             }
             return true;
@@ -530,16 +526,21 @@
             document.getElementById('defeated-count').innerText = `${nemiciSconfittiTotali}/11`;
 
             document.getElementById('deck-dungeon').innerHTML = mazzoDungeon.length > 0 ? `<div class="card back">1. Dungeon<br>(${mazzoDungeon.length})</div>` : '';
-            document.getElementById('card-event').innerHTML = cartaEventoCorrente ? renderCardHTML(cartaEventoCorrente) : (carteEventoPila.length > 0 ? renderCardHTML(carteEventoPila[carteEventoPila.length - 1], `x${carteEventoPila.length}`) : '');
+            
+            // Pila Eventi
+            let topEventCard = cartaEventoCorrente || (carteEventoPila.length > 0 ? carteEventoPila[carteEventoPila.length - 1] : null);
+            document.getElementById('card-event').innerHTML = topEventCard ? renderCardHTML(topEventCard, `x${carteEventoPila.length + (cartaEventoCorrente ? 1 : 0)}`) : '';
+
             document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card enemy-back">3. Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
-            document.getElementById('slot-catacomb').innerHTML = catacomba.length > 0 ? `<div class="card back">4. Scarti<br>(${catacomba.length})</div>` : '';
+            
+            // Catacomba (Nemici Sconfitti)
+            document.getElementById('slot-catacomb').innerHTML = catacomba.length > 0 ? `<div class="card enemy-back">4. Scarti<br>(${catacomba.length})</div>` : '';
 
             document.getElementById('slot-enemy').innerHTML = enemy ? renderCardHTML(enemy) : '';
             document.getElementById('slot-relics').innerHTML = reliquieOttenute.length > 0 ? renderCardHTML(reliquieOttenute[reliquieOttenute.length - 1], `x${reliquieOttenute.length}`) : '';
             document.getElementById('slot-hero').innerHTML = renderCardHTML(hero.card);
             document.getElementById('deck-relics').innerHTML = mazzoReliquie.length > 0 ? `<div class="card back">10. Reliquie<br>(${mazzoReliquie.length})</div>` : '';
 
-            // Slot Oro con scorrimento ed elementi selezionabili
             let goldHTML = '';
             carteOro.forEach(card => {
                 let isSel = carteOroSelezionate.includes(card.id);
@@ -547,7 +548,6 @@
             });
             document.getElementById('slot-gold').innerHTML = goldHTML;
 
-            // Slot Aiuti
             let aidHTML = '';
             carteAiuto.forEach(card => {
                 let isSel = carteAiutoSelezionate.includes(card.id);
@@ -555,7 +555,6 @@
             });
             document.getElementById('slot-aids').innerHTML = aidHTML;
 
-            // Carte Azione Eroe
             let heroActHTML = '';
             carteAzioneEroe.forEach((card) => {
                 let isSel = carteSelezionateEroe.includes(card.id);
@@ -563,7 +562,6 @@
             });
             document.getElementById('slot-hero-actions').innerHTML = heroActHTML;
 
-            // Carte Azione Nemico
             let enemyActHTML = '';
             carteAzioneNemico.forEach((card, idx) => {
                 if (idx === carteAzioneNemico.length - 1) {
@@ -635,6 +633,7 @@
             if (cartaEventoCorrente.suit === SUITS.DENARI) {
                 carteOro.push(cartaEventoCorrente);
                 log(`Oro ottenuto (+${cartaEventoCorrente.value})!`);
+                cartaEventoCorrente = null; // Rimossa da evento corrente poiché mantenuta in mano
                 endTurn(false);
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
                 log(`Nemico avvistato! Seleziona almeno ${requiredGold} Oro per evitarlo o più oro per Corromperlo.`);
@@ -647,7 +646,7 @@
 
         function rollDiceTest() {
             let roll = Math.floor(Math.random() * 6) + 1;
-            document.getElementById('dice-result').innerText = DICE_FACES[roll - 1]; // Visualizza Dado Grafico
+            document.getElementById('dice-result').innerText = DICE_FACES[roll - 1];
             log(`Lancio 1D6: ${roll} ${DICE_FACES[roll - 1]}`);
 
             let vce = cartaEventoCorrente.value;
@@ -685,12 +684,13 @@
 
             if (paidValue < requiredGold || (isCorruption && paidValue <= requiredGold)) return;
 
+            // Spostiamo le carte oro usate nella PILA EVENTI
             let selectedCards = carteOro.filter(c => carteOroSelezionate.includes(c.id));
             carteOro = carteOro.filter(c => !carteOroSelezionate.includes(c.id));
-            catacomba.push(...selectedCards);
+            carteEventoPila.push(...selectedCards);
             carteOroSelezionate = [];
 
-            log(`Spesi ${paidValue} Oro selezionati.`);
+            log(`Spesi ${paidValue} Oro selezionati (vanno nella Pila Evento).`);
 
             if (cartaEventoCorrente.suit === SUITS.SPADE) {
                 if (isCorruption) {
@@ -795,9 +795,9 @@
             if (carteSelezionateEroe.length === 0) return;
             let discarded = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
             carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
-            catacomba.push(...discarded);
+            carteEventoPila.push(...discarded); // Vanno nella Pila Evento
             carteSelezionateEroe = [];
-            log(`Scartate ${discarded.length} carte dalla mano dell'Eroe.`);
+            log(`Scartate ${discarded.length} carte azione Eroe (vanno nella Pila Eventi).`);
             updateUI();
         }
 
@@ -818,8 +818,9 @@
 
             if (aidBonus > 0) {
                 carteAiuto = carteAiuto.filter(a => !matchingAids.map(m => m.id).includes(a.id));
+                // Le carte aiuto sono carte nemico arruolate, dopo l'uso vanno nella Catacomba (scarti nemici)
                 catacomba.push(...matchingAids);
-                log(`Usate ${aidBonus} Carte Aiuto di ${chosenSuit} (+${aidBonus})!`);
+                log(`Usate ${aidBonus} Carte Aiuto di ${chosenSuit} (+${aidBonus})! (finiscono in Catacomba)`);
             }
             carteAiutoSelezionate = [];
 
@@ -834,7 +835,9 @@
 
             carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
             carteSelezionateEroe = [];
-            catacomba.push(enemyCardPlayed, ...heroCardsPlayed);
+            
+            // Le carte azione eroe e nemico usate vanno nella PILA EVENTI
+            carteEventoPila.push(enemyCardPlayed, ...heroCardsPlayed);
 
             if (checkGameOver()) return;
             checkCombatStatus();
@@ -886,19 +889,25 @@
                         reliquieOttenute.push(rel);
                         log(`★ OTTENUTA LA RELIQUIA DI ${enemy.suit}! ★`);
                     }
+                    catacomba.push(enemy); // Il Re va in Catacomba
                 } else {
-                    carteAiuto.push(enemy);
-                    log(`Il nemico diventa una Carta Aiuto.`);
+                    carteAiuto.push(enemy); // Fante e Cavaliere diventano Carte Aiuto
+                    log(`Il nemico viene arruolato come Carta Aiuto.`);
                 }
 
                 if (cartaEventoCorrente) {
-                    catacomba.push(cartaEventoCorrente);
+                    carteEventoPila.push(cartaEventoCorrente);
                     cartaEventoCorrente = null;
                 }
 
                 inCombattimento = false;
                 enemy = null;
-                carteAzioneNemico = [];
+                
+                // Le eventuali carte azione del nemico rimaste non usate vanno nella PILA EVENTI
+                if (carteAzioneNemico.length > 0) {
+                    carteEventoPila.push(...carteAzioneNemico);
+                    carteAzioneNemico = [];
+                }
                 
                 checkWinCondition();
                 endTurn(false);
@@ -939,10 +948,10 @@
             }
         }
 
-        function endTurn(discardEvent = true) {
+        function endTurn(keepEventInPile = true) {
             if (!inCombattimento) {
-                if (discardEvent && cartaEventoCorrente) {
-                    catacomba.push(cartaEventoCorrente);
+                if (keepEventInPile && cartaEventoCorrente) {
+                    carteEventoPila.push(cartaEventoCorrente);
                     cartaEventoCorrente = null;
                 }
                 document.getElementById('btn-draw').disabled = false;
