@@ -80,18 +80,6 @@
             color: #fff;
         }
 
-        .header-btn.btn-post-combat {
-            background: #2e7d32;
-            color: #ffffff;
-            border-color: #00e676;
-            animation: pulse-post-combat 1.2s infinite alternate;
-        }
-
-        @keyframes pulse-post-combat {
-            from { box-shadow: 0 0 3px #00e676; }
-            to { box-shadow: 0 0 8px #00e676; }
-        }
-
         .status-bar {
             display: flex;
             justify-content: space-around;
@@ -287,6 +275,16 @@
             to { box-shadow: 0 0 12px #ffd700; }
         }
 
+        .event-discardable {
+            cursor: pointer;
+            animation: pulse-glow-event 1.2s infinite alternate;
+        }
+
+        @keyframes pulse-glow-event {
+            from { box-shadow: 0 0 4px #00e676; }
+            to { box-shadow: 0 0 12px #00e676; }
+        }
+
         .gold-drawable {
             cursor: pointer;
             border-color: #ffd700 !important;
@@ -454,7 +452,6 @@
     <header>
         <h1>★ Ruba Dungeon ★</h1>
         <div class="header-actions">
-            <button id="btn-post-combat-header" class="header-btn btn-post-combat" onclick="confirmPostCombatSelection()" style="display: none;">Scarta / Continua</button>
             <button id="btn-restart" class="header-btn btn-action" onclick="initGame()">Nuova Partita</button>
             <button id="btn-toggle-mode" class="header-btn" onclick="toggleMode()">Modo: Facile</button>
         </div>
@@ -471,7 +468,7 @@
     <div class="board" id="game-board">
         <!-- RIGA 1 -->
         <div class="slot" onclick="handleDungeonDeckClick()"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon" class="card-container"></div></div>
-        <div class="slot"><span class="slot-title">2. Eventi Pila</span><div id="card-event" class="card-container"></div></div>
+        <div class="slot" onclick="handleEventPileClick()"><span class="slot-title">2. Eventi Pila</span><div id="card-event" class="card-container"></div></div>
         <div class="slot" onclick="handleEnemyDeckClick()"><span class="slot-title">3. Nemici</span><div id="deck-characters" class="card-container"></div></div>
         <div class="slot"><span class="slot-title">4. Catacomba</span><div id="slot-catacomb" class="card-container"></div></div>
 
@@ -673,11 +670,12 @@
             document.getElementById('defeated-count').innerText = `${nemiciSconfittiTotali}/11`;
 
             // Mazzo Dungeon
+            let canClickDungeon = (canDrawEvent && !inCombattimento) || fasePostCombattimento;
             document.getElementById('deck-dungeon').innerHTML = mazzoDungeon.length > 0 
-                ? `<div class="card back ${canDrawEvent && !inCombattimento && !fasePostCombattimento ? 'dungeon-drawable' : ''}">1. Dungeon<br>(${mazzoDungeon.length})</div>` 
+                ? `<div class="card back ${canClickDungeon ? 'dungeon-drawable' : ''}">1. Dungeon<br>(${mazzoDungeon.length})</div>` 
                 : '';
             
-            // Carta Evento
+            // Carta Evento / Pila Eventi
             let topEventCard = cartaEventoCorrente || (carteEventoPila.length > 0 ? carteEventoPila[carteEventoPila.length - 1] : null);
             let eventClickFn = '';
             let extraCardClass = '';
@@ -691,10 +689,13 @@
                 } else if (cartaEventoCorrente.suit === SUITS.COPPE || cartaEventoCorrente.suit === SUITS.BASTONI) {
                     eventClickFn = 'handleNonCombatEventWithGold()';
                 }
+            } else if (fasePostCombattimento && carteSelezionateEroe.length > 0) {
+                extraCardClass = 'event-discardable';
             }
+
             document.getElementById('card-event').innerHTML = topEventCard 
                 ? renderCardHTML(topEventCard, `x${carteEventoPila.length + (cartaEventoCorrente ? 1 : 0)}`, false, eventClickFn, '', extraCardClass) 
-                : '';
+                : (fasePostCombattimento && carteSelezionateEroe.length > 0 ? `<div class="card back event-discardable" style="justify-content: center;">2. Scarta Qui</div>` : '');
 
             // Mazzo Nemici
             let canFightManual = (cartaEventoCorrente && cartaEventoCorrente.suit === SUITS.SPADE && !inCombattimento && !fasePostCombattimento);
@@ -792,15 +793,6 @@
                 }
             }
             document.getElementById('slot-enemy-actions').innerHTML = enemyActHTML;
-
-            // Pulsante Post-Combattimento nell'Header
-            let btnPostCombatHeader = document.getElementById('btn-post-combat-header');
-            if (fasePostCombattimento) {
-                btnPostCombatHeader.style.display = 'block';
-                btnPostCombatHeader.innerText = carteSelezionateEroe.length > 0 ? `Scarta (${carteSelezionateEroe.length}) & Continua` : 'Continua';
-            } else {
-                btnPostCombatHeader.style.display = 'none';
-            }
         }
 
         function renderCardHTML(card, badge = '', isSelected = false, clickFn = '', extraHTML = '', extraClass = '') {
@@ -922,8 +914,37 @@
         }
 
         function handleDungeonDeckClick() {
-            if (!canDrawEvent || inCombattimento || isRollingDice || fasePostCombattimento) return;
+            if (inCombattimento || isRollingDice) return;
+
+            if (fasePostCombattimento) {
+                if (carteSelezionateEroe.length > 0) {
+                    log('Hai carte azione selezionate! Tocca la casella "2. Eventi Pila" per scartarle, oppure deselezionale prima di proseguire.');
+                    return;
+                }
+                fasePostCombattimento = false;
+                canDrawEvent = true;
+                log('Prosegui la spedizione!');
+                drawEvent();
+                return;
+            }
+
+            if (!canDrawEvent) return;
             drawEvent();
+        }
+
+        function handleEventPileClick() {
+            if (!fasePostCombattimento) return;
+
+            if (carteSelezionateEroe.length > 0) {
+                let discarded = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
+                carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
+                carteEventoPila.push(...discarded);
+                log(`Hai scartato ${discarded.length} carte azione nella Pila Eventi.`);
+                carteSelezionateEroe = [];
+                updateUI();
+            } else {
+                log('Seleziona prima le carte azione che desideri scartare, poi tocca qui.');
+            }
         }
 
         function drawEvent() {
@@ -1054,7 +1075,7 @@
                 carteAzioneNemico.push(c);
             }
 
-            // Svela la terza carta azione del nemico (quella in cima alla pila, indice 2)
+            // Svela la terza carta azione del nemico
             if (carteAzioneNemico.length >= 3) {
                 carteAzioneNemico[2].revealed = true;
                 log(`La 3ª Carta Azione del Nemico è svelata: ${carteAzioneNemico[2].value} di ${carteAzioneNemico[2].suit}!`);
@@ -1108,22 +1129,6 @@
             }
 
             playSelectedHeroCards();
-        }
-
-        function confirmPostCombatSelection() {
-            if (!fasePostCombattimento) return;
-
-            if (carteSelezionateEroe.length > 0) {
-                let discarded = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
-                carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
-                carteEventoPila.push(...discarded);
-                log(`Scartate ${discarded.length} carte azione Eroe nella Pila Eventi.`);
-            }
-
-            carteSelezionateEroe = [];
-            fasePostCombattimento = false;
-            log('Prosegui la spedizione! Tocca il Mazzo Dungeon per pescare.');
-            endTurn(true);
         }
 
         function playSelectedHeroCards() {
@@ -1238,7 +1243,7 @@
 
                 fasePostCombattimento = true;
                 carteSelezionateEroe = [];
-                log(`Nemico battuto! Seleziona le Carte Azione Eroe da scartare nella Pila Eventi, poi premi "Scarta / Continua" in alto.`);
+                log(`VITTORIA! Se vuoi scartare carte azione Eroe, selezionale e tocca "2. Eventi Pila". Per proseguire senza scarti (o dopo lo scarto), tocca "1. Dungeon".`);
                 updateUI();
                 return;
             }
