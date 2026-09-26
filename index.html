@@ -13,6 +13,8 @@
             --accent-color: #d9a05b;
             --selected-border: #00e676;
             --enemy-color: #801818;
+            --dice-success: #00e676;
+            --dice-fail: #ff3333;
         }
 
         * {
@@ -234,6 +236,7 @@
 
         .span-2 { grid-column: span 2; }
 
+        /* SEZIONE DADO AGGIORNATA CON COLORI ESITO */
         .dice-slot {
             display: flex;
             flex-direction: column;
@@ -258,7 +261,7 @@
             line-height: 1;
             color: #111111;
             box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 0 8px rgba(0,0,0,0.1);
-            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
         }
 
         .dice-slot.active .dice-box {
@@ -275,6 +278,25 @@
 
         .dice-box.rolling {
             animation: dice-roll 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            background: #ffffff !important;
+            color: #111111 !important;
+            border-color: #111111 !important;
+        }
+
+        /* DADO VERDE SE SUCCESSO */
+        .dice-box.success {
+            background-color: var(--dice-success) !important;
+            color: #000000 !important;
+            border-color: #00b359 !important;
+            box-shadow: 0 0 18px var(--dice-success), 0 4px 12px rgba(0,0,0,0.7) !important;
+        }
+
+        /* DADO ROSSO SE FALLITO */
+        .dice-box.fail {
+            background-color: var(--dice-fail) !important;
+            color: #ffffff !important;
+            border-color: #cc0000 !important;
+            box-shadow: 0 0 18px var(--dice-fail), 0 4px 12px rgba(0,0,0,0.7) !important;
         }
 
         @keyframes dice-roll {
@@ -518,13 +540,18 @@
             return true;
         }
 
+        function resetDiceState() {
+            let diceBox = document.getElementById('dice-box');
+            diceBox.classList.remove('success', 'fail', 'rolling');
+        }
+
         function initGame() {
             document.getElementById('defeat-overlay').style.display = 'none';
             document.getElementById('log').innerHTML = '';
             
             let diceBox = document.getElementById('dice-box');
             diceBox.innerText = '⚀';
-            diceBox.classList.remove('rolling');
+            resetDiceState();
             
             log(`Nuova partita iniziata (${mode})... Tocca il Mazzo Dungeon per pescare.`);
 
@@ -808,6 +835,7 @@
         function drawEvent() {
             if (!checkAndReplenishDungeonDeck()) return;
 
+            resetDiceState();
             cartaEventoCorrente = mazzoDungeon.pop();
             carteOroSelezionate = [];
             updateUI();
@@ -849,6 +877,7 @@
             }
         }
 
+        /* FUNZIONE DADO CON VERDE / ROSSO IN BASE ALL'ESITO */
         function rollDiceTest() {
             if (!diceEnabled || isRollingDice) return;
 
@@ -856,8 +885,7 @@
             setDiceEnabled(false);
 
             let diceBox = document.getElementById('dice-box');
-            diceBox.classList.remove('rolling');
-            void diceBox.offsetWidth;
+            resetDiceState();
             diceBox.classList.add('rolling');
 
             let rollInterval = setInterval(() => {
@@ -871,19 +899,20 @@
 
                 let roll = Math.floor(Math.random() * 6) + 1;
                 diceBox.innerText = DICE_FACES[roll - 1];
-                log(`Risultato Dado: ${roll} ${DICE_FACES[roll - 1]}`);
 
                 let vce = cartaEventoCorrente.value;
                 let success = (roll === 6 || (roll !== 1 && roll >= vce));
 
                 if (success) {
-                    log('Test SUPERATO!');
+                    diceBox.classList.add('success');
+                    log(`Risultato Dado: ${roll} ${DICE_FACES[roll - 1]} ➔ Test SUPERATO!`);
                     if (cartaEventoCorrente.suit === SUITS.COPPE) {
                         hero.hp = Math.min(hero.maxHp, hero.hp + vce);
                         log(`Punti Vita recuperati: +${vce}. HP: ${hero.hp}`);
                     }
                 } else {
-                    log('Test FALLITO!');
+                    diceBox.classList.add('fail');
+                    log(`Risultato Dado: ${roll} ${DICE_FACES[roll - 1]} ➔ Test FALLITO!`);
                     let damage = Math.floor(vce / 2);
                     if (cartaEventoCorrente.suit === SUITS.BASTONI || cartaEventoCorrente.suit === SUITS.COPPE) {
                         hero.hp -= damage;
