@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ruba Dungeon - Dado Interattivo</title>
+    <title>Ruba Dungeon - Reliquie Scorrevoli & Combattimento Immediato</title>
     <style>
         :root {
             --bg-color: #1e1915;
@@ -589,7 +589,14 @@
             document.getElementById('slot-catacomb').innerHTML = catacomba.length > 0 ? `<div class="card enemy-back">4. Scarti<br>(${catacomba.length})</div>` : '';
 
             document.getElementById('slot-enemy').innerHTML = enemy ? renderCardHTML(enemy) : '';
-            document.getElementById('slot-relics').innerHTML = reliquieOttenute.length > 0 ? renderCardHTML(reliquieOttenute[reliquieOttenute.length - 1], `x${reliquieOttenute.length}`) : '';
+
+            // CASELLA 6. RELIQUIE (Visualizza tutte le reliquie conquistate e permette lo scorrimento)
+            let relicsHTML = '';
+            reliquieOttenute.forEach(rel => {
+                relicsHTML += renderCardHTML(rel);
+            });
+            document.getElementById('slot-relics').innerHTML = relicsHTML;
+
             document.getElementById('slot-hero').innerHTML = renderCardHTML(hero.card);
             document.getElementById('deck-relics').innerHTML = mazzoReliquie.length > 0 ? `<div class="card back">10. Reliquie<br>(${mazzoReliquie.length})</div>` : '';
 
@@ -697,9 +704,16 @@
                 document.getElementById('btn-draw').disabled = false;
                 setDiceEnabled(false);
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
-                log(`Nemico avvistato! Tผู้cca il DADO per il Test o paga/corrompi.`);
-                document.getElementById('btn-draw').disabled = true;
-                setDiceEnabled(true);
+                let totalGoldAvailable = getTotalGold();
+                setDiceEnabled(false); // Nessun dado per le carte Spade
+
+                if (totalGoldAvailable < requiredGold) {
+                    log(`Nemico ingaggiato! Nessun oro sufficiente per evitarlo/corromperlo (${totalGoldAvailable}/${requiredGold}). Entra direttamente in combattimento!`);
+                    startCombat();
+                } else {
+                    log(`Nemico avvistato! Seleziona Oro per Evitare (${requiredGold}) o Corrompere il nemico.`);
+                    document.getElementById('btn-draw').disabled = true;
+                }
             } else {
                 log(`Tocca il DADO per il Test o paga ${requiredGold} Oro.`);
                 document.getElementById('btn-draw').disabled = true;
@@ -715,10 +729,9 @@
 
             let diceBox = document.getElementById('dice-box');
             diceBox.classList.remove('rolling');
-            void diceBox.offsetWidth; // Trigger reflow per riavviare l'animazione
+            void diceBox.offsetWidth;
             diceBox.classList.add('rolling');
 
-            // Effetto visivo di rotolamento che fa scorrere facce casuali
             let rollInterval = setInterval(() => {
                 let randomFace = DICE_FACES[Math.floor(Math.random() * 6)];
                 diceBox.innerText = randomFace;
@@ -734,13 +747,6 @@
 
                 let vce = cartaEventoCorrente.value;
                 let success = (roll === 6 || (roll !== 1 && roll >= vce));
-
-                if (cartaEventoCorrente.suit === SUITS.SPADE) {
-                    log(success ? 'Test superato!' : 'Test fallito!');
-                    isRollingDice = false;
-                    startCombat();
-                    return;
-                }
 
                 if (success) {
                     log('Test SUPERATO!');
