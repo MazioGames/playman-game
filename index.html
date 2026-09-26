@@ -312,11 +312,11 @@
         .card-suit { font-size: 0.48rem; align-self: flex-end; text-transform: capitalize; }
 
         .bonus-tag {
-            font-size: 0.45rem;
+            font-size: 0.5rem;
             background: #00e676;
             color: #000;
             border-radius: 2px;
-            padding: 0 1px;
+            padding: 0 2px;
             position: absolute;
             bottom: 1px;
             left: 1px;
@@ -535,7 +535,6 @@
 
         let carteAzioneEroe = [];
         let carteAzioneNemico = [];
-        let ultimaAzioneNemicoGiocata = null;
         let carteSelezionateEroe = [];
 
         let inCombattimento = false;
@@ -631,7 +630,6 @@
             carteAiutoSelezionate = [];
             carteAzioneEroe = [];
             carteAzioneNemico = [];
-            ultimaAzioneNemicoGiocata = null;
             carteSelezionateEroe = [];
             enemy = null;
             cartaEventoCorrente = null;
@@ -707,7 +705,14 @@
             let canFightManual = (cartaEventoCorrente && cartaEventoCorrente.suit === SUITS.SPADE && !inCombattimento && !fasePostCombattimento);
             document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card enemy-back ${canFightManual ? 'clickable-enemy-card' : ''}">3. Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
             
-            document.getElementById('slot-catacomb').innerHTML = catacomba.length > 0 ? `<div class="card enemy-back">4. Scarti<br>(${catacomba.length})</div>` : '';
+            // Slot Catacomba (Sistemate le carte visibili)
+            let catacombHTML = '';
+            if (catacomba.length > 0) {
+                catacomba.forEach(c => {
+                    catacombHTML += renderCardHTML(c);
+                });
+            }
+            document.getElementById('slot-catacomb').innerHTML = catacombHTML;
 
             // Slot Nemico
             let enemyDiceVal = Math.max(1, Math.min(6, enemyHp || 1));
@@ -723,7 +728,7 @@
             });
             document.getElementById('slot-relics').innerHTML = relicsHTML;
 
-            // Slot Eroe (Dadi Azzurri)
+            // Slot Eroe
             let currentHeroHp = Math.max(0, hero.hp);
             let d1 = Math.min(6, currentHeroHp);
             let d2 = Math.max(0, currentHeroHp - 6);
@@ -752,7 +757,7 @@
             });
             document.getElementById('slot-aids').innerHTML = aidHTML;
 
-            // Carte Azione Eroe
+            // Carte Azione Eroe (Testo del bonus breve: "+1" o "+2")
             let heroActHTML = '';
             carteAzioneEroe.forEach((card) => {
                 let isSel = carteSelezionateEroe.includes(card.id);
@@ -764,11 +769,9 @@
                     let hasAid = selectedAids.some(a => a.suit === card.suit);
 
                     if (hasRelic && hasAid) {
-                        extraTag = '<div class="bonus-tag">+2 (Rel+Aiu)</div>';
-                    } else if (hasRelic) {
-                        extraTag = '<div class="bonus-tag">+1 Reliquia</div>';
-                    } else if (hasAid) {
-                        extraTag = '<div class="bonus-tag">+1 Aiuto</div>';
+                        extraTag = '<div class="bonus-tag">+2</div>';
+                    } else if (hasRelic || hasAid) {
+                        extraTag = '<div class="bonus-tag">+1</div>';
                     }
                 }
 
@@ -776,7 +779,7 @@
             });
             document.getElementById('slot-hero-actions').innerHTML = heroActHTML;
 
-            // Carte Azione Nemico
+            // Carte Azione Nemico (Rimosse le diciture svelata/usata)
             let enemyActHTML = '';
             if (inCombattimento) {
                 carteAzioneNemico.forEach((card, index) => {
@@ -784,15 +787,11 @@
                     let isClickableClass = (isTopTargetCard && carteSelezionateEroe.length > 0) ? 'clickable-enemy-card' : '';
 
                     if (card.revealed) {
-                        enemyActHTML += renderCardHTML(card, 'Svelata', false, isTopTargetCard ? 'handleEnemyCardClick()' : '', '', isClickableClass);
+                        enemyActHTML += renderCardHTML(card, '', false, isTopTargetCard ? 'handleEnemyCardClick()' : '', '', isClickableClass);
                     } else {
                         enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
                     }
                 });
-                
-                if (ultimaAzioneNemicoGiocata) {
-                    enemyActHTML += renderCardHTML(ultimaAzioneNemicoGiocata, 'Usata');
-                }
             }
             document.getElementById('slot-enemy-actions').innerHTML = enemyActHTML;
         }
@@ -1068,7 +1067,6 @@
                 let topCard = carteAzioneNemico[carteAzioneNemico.length - 1];
                 if (!topCard.revealed) {
                     topCard.revealed = true;
-                    log(`Carta Azione del Nemico svelata: ${topCard.value} di ${topCard.suit}!`);
                 }
             }
         }
@@ -1089,7 +1087,6 @@
 
             revealTopEnemyAction();
 
-            ultimaAzioneNemicoGiocata = null;
             carteSelezionateEroe = [];
             log('Seleziona la tua Carta Azione Eroe, poi tocca la Carta Nemico svelata per giocare!');
             updateUI();
@@ -1145,7 +1142,6 @@
             let heroCardsPlayed = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
             let enemyCardPlayed = carteAzioneNemico.pop();
             delete enemyCardPlayed.revealed;
-            ultimaAzioneNemicoGiocata = enemyCardPlayed;
 
             let chosenSuit = heroCardsPlayed[0].suit;
             let heroBaseValue = heroCardsPlayed.reduce((sum, c) => sum + c.value, 0);
@@ -1175,6 +1171,7 @@
             carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
             carteSelezionateEroe = [];
             
+            // Le due carte giocate vanno direttamente e automaticamente nella Pila Eventi
             carteEventoPila.push(enemyCardPlayed, ...heroCardsPlayed);
 
             if (checkGameOver()) return;
@@ -1243,7 +1240,6 @@
 
                 inCombattimento = false;
                 enemy = null;
-                ultimaAzioneNemicoGiocata = null;
                 
                 if (carteAzioneNemico.length > 0) {
                     carteEventoPila.push(...carteAzioneNemico);
