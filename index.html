@@ -118,6 +118,12 @@
             background: transparent;
         }
 
+        /* Slot specifico per il dado senza bordi o sfondi grigi */
+        .slot-dice {
+            border: none !important;
+            background: transparent !important;
+        }
+
         .slot-title {
             position: absolute;
             top: 1px;
@@ -236,7 +242,7 @@
 
         .span-2 { grid-column: span 2; }
 
-        /* SEZIONE DADO AGGIORNATA CON COLORI ESITO */
+        /* SEZIONE DADO - BORDI GRIGI RIMOSSI */
         .dice-slot {
             display: flex;
             flex-direction: column;
@@ -249,10 +255,11 @@
         }
 
         .dice-box {
-            width: 72px;
-            height: 72px;
+            width: 68px;
+            height: 68px;
             background: #ffffff;
-            border: 2.5px solid #111111;
+            border: none !important;
+            outline: none !important;
             border-radius: 14px;
             display: flex;
             align-items: center;
@@ -260,18 +267,17 @@
             font-size: 3.6rem;
             line-height: 1;
             color: #111111;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 0 8px rgba(0,0,0,0.1);
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
         }
 
         .dice-slot.active .dice-box {
             box-shadow: 0 0 14px var(--accent-color), 0 4px 10px rgba(0,0,0,0.6);
-            border-color: var(--accent-color);
             opacity: 1;
         }
 
         .dice-slot.disabled .dice-box {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
             box-shadow: none;
         }
@@ -280,14 +286,12 @@
             animation: dice-roll 0.6s cubic-bezier(0.25, 1, 0.5, 1);
             background: #ffffff !important;
             color: #111111 !important;
-            border-color: #111111 !important;
         }
 
         /* DADO VERDE SE SUCCESSO */
         .dice-box.success {
             background-color: var(--dice-success) !important;
             color: #000000 !important;
-            border-color: #00b359 !important;
             box-shadow: 0 0 18px var(--dice-success), 0 4px 12px rgba(0,0,0,0.7) !important;
         }
 
@@ -295,7 +299,6 @@
         .dice-box.fail {
             background-color: var(--dice-fail) !important;
             color: #ffffff !important;
-            border-color: #cc0000 !important;
             box-shadow: 0 0 18px var(--dice-fail), 0 4px 12px rgba(0,0,0,0.7) !important;
         }
 
@@ -432,8 +435,8 @@
         <div class="slot"><span class="slot-title">8. Oro</span><div id="slot-gold" class="card-container"></div></div>
         <div class="slot"><span class="slot-title">9. Aiuti</span><div id="slot-aids" class="card-container"></div></div>
         
-        <!-- DADO -->
-        <div class="slot">
+        <!-- DADO (SENZA BORDO GRIGIO) -->
+        <div class="slot slot-dice">
             <div id="dice-container" class="dice-slot disabled" onclick="rollDiceTest()">
                 <div id="dice-box" class="dice-box">⚀</div>
             </div>
@@ -674,7 +677,7 @@
             });
             document.getElementById('slot-aids').innerHTML = aidHTML;
 
-            // Carte Azione Eroe con calcolo dinamico bonus
+            // Carte Azione Eroe
             let heroActHTML = '';
             carteAzioneEroe.forEach((card) => {
                 let isSel = carteSelezionateEroe.includes(card.id);
@@ -877,7 +880,7 @@
             }
         }
 
-        /* FUNZIONE DADO CON VERDE / ROSSO IN BASE ALL'ESITO */
+        /* FUNZIONE DADO CON EFFETTI DI SUCCESSO E FALLIMENTO */
         function rollDiceTest() {
             if (!diceEnabled || isRollingDice) return;
 
