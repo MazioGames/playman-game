@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ruba Dungeon - Carte Nemico Corrette</title>
+    <title>Ruba Dungeon - Dado Interattivo</title>
     <style>
         :root {
             --bg-color: #1e1915;
@@ -193,13 +193,70 @@
             align-items: center;
             font-size: 0.55rem;
             text-align: center;
-            width: 44px; /* Stessa dimensione delle carte eroe */
+            width: 44px;
         }
 
         .card-val { font-size: 0.75rem; line-height: 1; }
         .card-suit { font-size: 0.48rem; align-self: flex-end; text-transform: capitalize; }
 
         .span-2 { grid-column: span 2; }
+
+        /* DADO GRANDE NEL Riquadro Tra 9 e 10 */
+        .dice-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            perspective: 600px;
+        }
+
+        .dice-box {
+            width: 58px;
+            height: 58px;
+            background: linear-gradient(145deg, #ffffff, #e6e6e6);
+            border: 2px solid #111111;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            line-height: 1;
+            color: #111111;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 0 6px rgba(0,0,0,0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.2s;
+        }
+
+        .dice-slot.active .dice-box {
+            box-shadow: 0 0 12px var(--accent-color), 0 4px 8px rgba(0,0,0,0.6);
+            border-color: var(--accent-color);
+        }
+
+        .dice-slot.disabled .dice-box {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(80%);
+            box-shadow: none;
+        }
+
+        .dice-slot:not(.disabled):hover .dice-box {
+            transform: scale(1.05);
+        }
+
+        /* Animazione Rotazione 3D Dado */
+        .dice-box.rolling {
+            animation: dice-roll 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes dice-roll {
+            0% { transform: rotate3d(1, 1, 0, 0deg) scale(0.9); }
+            25% { transform: rotate3d(1, 2, 1, 180deg) scale(1.2); }
+            50% { transform: rotate3d(2, 1, 2, 360deg) scale(1.1); }
+            75% { transform: rotate3d(1, 3, 1, 540deg) scale(1.05); }
+            100% { transform: rotate3d(0, 0, 0, 720deg) scale(1); }
+        }
 
         .controls {
             height: 15vh;
@@ -233,31 +290,6 @@
             border-color: #555;
             color: #777;
             opacity: 0.6;
-        }
-
-        /* DADO BIANCO CON PUNTINI NERI */
-        .dice-display {
-            width: 42px;
-            height: 100%;
-            background: #ffffff;
-            border: 1.5px solid #000000;
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            line-height: 1;
-            color: #000000;
-            flex-shrink: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 0 4px rgba(0,0,0,0.15);
-        }
-
-        .dice-label {
-            font-size: 0.4rem;
-            color: #333333;
-            font-weight: bold;
-            text-transform: uppercase;
         }
 
         #log {
@@ -358,7 +390,14 @@
         <!-- RIGA 4 -->
         <div class="slot"><span class="slot-title">8. Oro</span><div id="slot-gold" class="card-container"></div></div>
         <div class="slot"><span class="slot-title">9. Aiuti</span><div id="slot-aids" class="card-container"></div></div>
-        <div class="slot empty"></div>
+        
+        <!-- DADO TRA CASELLA 9 E 10 -->
+        <div class="slot">
+            <div id="dice-container" class="dice-slot disabled" onclick="rollDiceTest()">
+                <div id="dice-box" class="dice-box">⚀</div>
+            </div>
+        </div>
+
         <div class="slot"><span class="slot-title">10. Mazzo Reliquie</span><div id="deck-relics" class="card-container"></div></div>
         
         <div id="defeat-overlay" class="defeat-overlay" style="display: none;">
@@ -371,13 +410,6 @@
     <div class="controls">
         <div class="btn-group">
             <button id="btn-draw" onclick="drawEvent()">Pesca Evento</button>
-            <button id="btn-roll" onclick="rollDiceTest()" disabled>Lancia 1D6</button>
-            
-            <div class="dice-display">
-                <span class="dice-label">Dado</span>
-                <span id="dice-result">-</span>
-            </div>
-
             <button id="btn-pay-gold" onclick="paySelectedGold(false)" disabled>Evita (Oro)</button>
             <button id="btn-corrupt" onclick="paySelectedGold(true)" disabled>Corrompi</button>
         </div>
@@ -420,6 +452,8 @@
         let carteSelezionateEroe = [];
 
         let inCombattimento = false;
+        let isRollingDice = false;
+        let diceEnabled = false;
         let nemiciSconfittiTotali = 0;
 
         function log(msg) {
@@ -462,7 +496,7 @@
                     log('Nessuna carta rimasta per ricostruire il Mazzo Dungeon!');
                     return false;
                 }
-                log('Mazzo Dungeon esaurito! Rimescolo la Pila Eventi (2) per ricreare il Mazzo Dungeon (1)...');
+                log('Mazzo Dungeon esaurito! Rimescolo la Pila Eventi per ricreare il Mazzo Dungeon...');
                 mazzoDungeon = [...carteEventoPila];
                 carteEventoPila = [];
                 shuffle(mazzoDungeon);
@@ -473,7 +507,11 @@
         function initGame() {
             document.getElementById('defeat-overlay').style.display = 'none';
             document.getElementById('log').innerHTML = '';
-            document.getElementById('dice-result').innerText = '-';
+            
+            let diceBox = document.getElementById('dice-box');
+            diceBox.innerText = '⚀';
+            diceBox.classList.remove('rolling');
+            
             log(`Nuova partita iniziata (${mode})...`);
 
             let fullDeck = createDeck();
@@ -504,6 +542,8 @@
             enemy = null;
             cartaEventoCorrente = null;
             inCombattimento = false;
+            isRollingDice = false;
+            diceEnabled = false;
             nemiciSconfittiTotali = 0;
 
             updateUI();
@@ -518,6 +558,18 @@
             return carteOro
                 .filter(c => carteOroSelezionate.includes(c.id))
                 .reduce((sum, c) => sum + c.value, 0);
+        }
+
+        function setDiceEnabled(enabled) {
+            diceEnabled = enabled;
+            let diceContainer = document.getElementById('dice-container');
+            if (enabled) {
+                diceContainer.classList.remove('disabled');
+                diceContainer.classList.add('active');
+            } else {
+                diceContainer.classList.add('disabled');
+                diceContainer.classList.remove('active');
+            }
         }
 
         function updateUI() {
@@ -562,20 +614,16 @@
             });
             document.getElementById('slot-hero-actions').innerHTML = heroActHTML;
 
-            // RENDER CARTE AZIONE NEMICO (Prime due coperte, terza visibile)
             let enemyActHTML = '';
             if (inCombattimento) {
                 carteAzioneNemico.forEach((card, index) => {
-                    // Se è tra le prime due carte, la mostriamo a dorso coperto
-                    if (index < 2) {
-                        enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
-                    } else {
-                        // La terza carta è mostrata a faccia in su visibile
+                    if (index === carteAzioneNemico.length - 1) {
                         enemyActHTML += renderCardHTML(card);
+                    } else {
+                        enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
                     }
                 });
                 
-                // Se c'è un'ultima carta usata nel turno precedente, la mostriamo a fine fila
                 if (ultimaAzioneNemicoGiocata) {
                     enemyActHTML += renderCardHTML(ultimaAzioneNemicoGiocata, 'Usata');
                 }
@@ -625,7 +673,7 @@
         }
 
         function drawEvent() {
-            if (inCombattimento) return;
+            if (inCombattimento || isRollingDice) return;
 
             if (cartaEventoCorrente && cartaEventoCorrente.suit === SUITS.DENARI) {
                 carteOro.push(cartaEventoCorrente);
@@ -647,51 +695,77 @@
             if (cartaEventoCorrente.suit === SUITS.DENARI) {
                 log(`Trovata Carta Oro (+${cartaEventoCorrente.value})! Visibile su Casella Eventi, verrà aggiunta all'Oro.`);
                 document.getElementById('btn-draw').disabled = false;
+                setDiceEnabled(false);
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
-                log(`Nemico avvistato! Seleziona almeno ${requiredGold} Oro per evitarlo o più oro per Corromperlo.`);
+                log(`Nemico avvistato! Tผู้cca il DADO per il Test o paga/corrompi.`);
                 document.getElementById('btn-draw').disabled = true;
-                document.getElementById('btn-roll').disabled = false;
+                setDiceEnabled(true);
             } else {
-                log(`Seleziona ${requiredGold} Oro per superare l'evento o lancia 1D6.`);
+                log(`Tocca il DADO per il Test o paga ${requiredGold} Oro.`);
                 document.getElementById('btn-draw').disabled = true;
-                document.getElementById('btn-roll').disabled = false;
+                setDiceEnabled(true);
             }
         }
 
         function rollDiceTest() {
-            let roll = Math.floor(Math.random() * 6) + 1;
-            document.getElementById('dice-result').innerText = DICE_FACES[roll - 1];
-            log(`Lancio 1D6: ${roll} ${DICE_FACES[roll - 1]}`);
+            if (!diceEnabled || isRollingDice) return;
 
-            let vce = cartaEventoCorrente.value;
-            let success = (roll === 6 || (roll !== 1 && roll >= vce));
+            isRollingDice = true;
+            setDiceEnabled(false);
 
-            if (cartaEventoCorrente.suit === SUITS.SPADE) {
-                log(success ? 'Test superato!' : 'Test fallito!');
-                startCombat();
-                return;
-            }
+            let diceBox = document.getElementById('dice-box');
+            diceBox.classList.remove('rolling');
+            void diceBox.offsetWidth; // Trigger reflow per riavviare l'animazione
+            diceBox.classList.add('rolling');
 
-            if (success) {
-                log('Test SUPERATO!');
-                if (cartaEventoCorrente.suit === SUITS.COPPE) {
-                    hero.hp = Math.min(hero.maxHp, hero.hp + vce);
-                    log(`Punti Vita recuperati: +${vce}. HP: ${hero.hp}`);
+            // Effetto visivo di rotolamento che fa scorrere facce casuali
+            let rollInterval = setInterval(() => {
+                let randomFace = DICE_FACES[Math.floor(Math.random() * 6)];
+                diceBox.innerText = randomFace;
+            }, 70);
+
+            setTimeout(() => {
+                clearInterval(rollInterval);
+                diceBox.classList.remove('rolling');
+
+                let roll = Math.floor(Math.random() * 6) + 1;
+                diceBox.innerText = DICE_FACES[roll - 1];
+                log(`Risultato Dado: ${roll} ${DICE_FACES[roll - 1]}`);
+
+                let vce = cartaEventoCorrente.value;
+                let success = (roll === 6 || (roll !== 1 && roll >= vce));
+
+                if (cartaEventoCorrente.suit === SUITS.SPADE) {
+                    log(success ? 'Test superato!' : 'Test fallito!');
+                    isRollingDice = false;
+                    startCombat();
+                    return;
                 }
-            } else {
-                log('Test FALLITO!');
-                let damage = Math.floor(vce / 2);
-                if (cartaEventoCorrente.suit === SUITS.BASTONI || cartaEventoCorrente.suit === SUITS.COPPE) {
-                    hero.hp -= damage;
-                    log(`Danni subiti: ${damage}. HP: ${hero.hp}`);
-                }
-            }
 
-            if (checkGameOver()) return;
-            endTurn(true);
+                if (success) {
+                    log('Test SUPERATO!');
+                    if (cartaEventoCorrente.suit === SUITS.COPPE) {
+                        hero.hp = Math.min(hero.maxHp, hero.hp + vce);
+                        log(`Punti Vita recuperati: +${vce}. HP: ${hero.hp}`);
+                    }
+                } else {
+                    log('Test FALLITO!');
+                    let damage = Math.floor(vce / 2);
+                    if (cartaEventoCorrente.suit === SUITS.BASTONI || cartaEventoCorrente.suit === SUITS.COPPE) {
+                        hero.hp -= damage;
+                        log(`Danni subiti: ${damage}. HP: ${hero.hp}`);
+                    }
+                }
+
+                isRollingDice = false;
+                if (checkGameOver()) return;
+                endTurn(true);
+            }, 600);
         }
 
         function paySelectedGold(isCorruption = false) {
+            if (isRollingDice) return;
+
             let vce = cartaEventoCorrente.value;
             let requiredGold = (mode === 'Difficile' && cartaEventoCorrente.suit === SUITS.SPADE) ? vce * 2 : vce;
             let paidValue = getSelectedGoldValue();
@@ -728,9 +802,9 @@
                         enemyHp = enemyMaxHp;
                         inCombattimento = true;
                         document.getElementById('btn-draw').disabled = true;
-                        document.getElementById('btn-roll').disabled = true;
                         document.getElementById('btn-pay-gold').disabled = true;
                         document.getElementById('btn-corrupt').disabled = true;
+                        setDiceEnabled(false);
                         setupCombatTurn();
                         return;
                     }
@@ -759,9 +833,9 @@
             log(`ENTRI IN COMBATTIMENTO contro ${rankName}: ${enemy.value} di ${enemy.suit} (${enemyHp}/${enemyMaxHp} HP)!`);
 
             document.getElementById('btn-draw').disabled = true;
-            document.getElementById('btn-roll').disabled = true;
             document.getElementById('btn-pay-gold').disabled = true;
             document.getElementById('btn-corrupt').disabled = true;
+            setDiceEnabled(false);
 
             setupCombatTurn();
         }
@@ -819,7 +893,6 @@
             if (carteSelezionateEroe.length === 0 || carteAzioneNemico.length === 0) return;
 
             let heroCardsPlayed = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
-            // Viene usata la carta nemico aperta (la terza della mano)
             let enemyCardPlayed = carteAzioneNemico.pop();
             ultimaAzioneNemicoGiocata = enemyCardPlayed;
 
@@ -943,10 +1016,10 @@
                 log('☠ SCONFITTA! Il tuo eroe è caduto.');
                 document.getElementById('defeat-overlay').style.display = 'flex';
                 document.getElementById('btn-draw').disabled = true;
-                document.getElementById('btn-roll').disabled = true;
                 document.getElementById('btn-pay-gold').disabled = true;
                 document.getElementById('btn-corrupt').disabled = true;
                 document.getElementById('btn-play-action').disabled = true;
+                setDiceEnabled(false);
                 return true;
             }
             return false;
@@ -973,10 +1046,10 @@
                     cartaEventoCorrente = null;
                 }
                 document.getElementById('btn-draw').disabled = false;
-                document.getElementById('btn-roll').disabled = true;
                 document.getElementById('btn-pay-gold').disabled = true;
                 document.getElementById('btn-corrupt').disabled = true;
                 document.getElementById('btn-play-action').disabled = true;
+                setDiceEnabled(false);
             }
             updateUI();
         }
