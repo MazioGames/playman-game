@@ -39,23 +39,23 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 4px;
+            padding: 3px;
             touch-action: manipulation;
         }
 
         header {
             text-align: center;
-            height: 4.5vh;
+            height: 4vh;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 2px;
+            padding: 0 4px;
             gap: 4px;
         }
 
         h1 {
             color: var(--accent-color);
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             letter-spacing: 0.5px;
             white-space: nowrap;
         }
@@ -70,8 +70,8 @@
             background: #3e352b;
             color: var(--accent-color);
             border: 1px solid var(--accent-color);
-            padding: 3px 6px;
-            font-size: 0.65rem;
+            padding: 3px 8px;
+            font-size: 0.7rem;
             font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
@@ -88,17 +88,17 @@
             justify-content: space-around;
             align-items: center;
             background: rgba(0, 0, 0, 0.5);
-            padding: 2px 4px;
+            padding: 1px 4px;
             border-radius: 6px;
             border: 1px solid var(--accent-color);
-            font-size: 0.65rem;
-            height: 4.5vh;
+            font-size: 0.7rem;
+            height: 3.5vh;
         }
 
         .status-item {
             display: flex;
-            flex-direction: column;
             align-items: center;
+            gap: 3px;
         }
 
         .status-val {
@@ -111,9 +111,9 @@
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(4, 1fr);
             gap: 3px;
-            height: 68vh;
+            height: 76vh;
             background: #2b221b;
-            padding: 4px;
+            padding: 3px;
             border-radius: 8px;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
             position: relative;
@@ -121,13 +121,13 @@
 
         .slot {
             border: 1px dashed #5c4d3c;
-            border-radius: 4px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 1px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 2px;
             overflow: hidden;
         }
 
@@ -143,9 +143,9 @@
 
         .slot-title {
             position: absolute;
-            top: 1px;
-            left: 2px;
-            font-size: 0.45rem;
+            top: 2px;
+            left: 3px;
+            font-size: 0.52rem;
             color: var(--accent-color);
             text-transform: uppercase;
             font-weight: bold;
@@ -156,12 +156,13 @@
 
         .card-container {
             display: flex;
-            gap: 3px;
+            gap: 4px;
             width: 100%;
             height: 100%;
             align-items: center;
             justify-content: flex-start;
-            padding-top: 8px;
+            padding-top: 10px;
+            padding-bottom: 2px;
             padding-left: 2px;
             padding-right: 2px;
             overflow-x: auto;
@@ -183,13 +184,13 @@
         }
 
         .hp-dice {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.6);
             cursor: pointer;
@@ -215,19 +216,21 @@
             border-radius: 2px;
         }
 
+        /* INGRANDIMENTO CARTE */
         .card {
-            width: 44px;
-            height: 82%;
+            width: 52px;
+            height: 92%;
+            max-height: 100px;
             background-color: var(--card-bg);
             color: var(--text-color);
-            border-radius: 4px;
+            border-radius: 5px;
             border: 1.5px solid #000;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 2px 3px;
+            padding: 3px 4px;
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.6);
             cursor: pointer;
             transition: transform 0.1s, border-color 0.1s;
             flex-shrink: 0;
@@ -236,8 +239,8 @@
 
         .card.selected {
             border: 2px solid var(--selected-border);
-            transform: translateY(-3px);
-            box-shadow: 0 0 8px var(--selected-border);
+            transform: translateY(-4px);
+            box-shadow: 0 0 10px var(--selected-border);
         }
 
         .card.back {
@@ -246,8 +249,9 @@
             color: #d9a05b;
             justify-content: center;
             align-items: center;
-            font-size: 0.55rem;
+            font-size: 0.65rem;
             text-align: center;
+            line-height: 1.1;
         }
 
         .card.enemy-back {
@@ -256,9 +260,10 @@
             color: #fff;
             justify-content: center;
             align-items: center;
-            font-size: 0.55rem;
+            font-size: 0.65rem;
             text-align: center;
-            width: 44px;
+            width: 52px;
+            line-height: 1.1;
         }
 
         .clickable-enemy-card {
@@ -308,18 +313,18 @@
             }
         }
 
-        .card-val { font-size: 0.75rem; line-height: 1; }
-        .card-suit { font-size: 0.48rem; align-self: flex-end; text-transform: capitalize; }
+        .card-val { font-size: 0.9rem; line-height: 1; }
+        .card-suit { font-size: 0.55rem; align-self: flex-end; text-transform: capitalize; }
 
         .bonus-tag {
-            font-size: 0.5rem;
+            font-size: 0.6rem;
             background: #00e676;
             color: #000;
-            border-radius: 2px;
-            padding: 0 2px;
+            border-radius: 3px;
+            padding: 0 3px;
             position: absolute;
-            bottom: 1px;
-            left: 1px;
+            bottom: 2px;
+            left: 2px;
             font-weight: bold;
         }
 
@@ -337,16 +342,16 @@
         }
 
         .dice-box {
-            width: 68px;
-            height: 68px;
+            width: 62px;
+            height: 62px;
             background: #ffffff;
             border: none !important;
             outline: none !important;
-            border-radius: 14px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3.6rem;
+            font-size: 3.2rem;
             line-height: 1;
             color: #111111;
             box-shadow: 0 4px 10px rgba(0,0,0,0.6);
@@ -391,23 +396,23 @@
         }
 
         #log {
-            height: 18vh;
+            height: 14vh;
             background: #120e0c;
             border: 1px solid #5c4d3c;
-            border-radius: 4px;
-            padding: 4px;
+            border-radius: 6px;
+            padding: 4px 6px;
             overflow-y: auto;
             font-family: monospace;
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             color: #d9a05b;
-            line-height: 1.2;
+            line-height: 1.25;
         }
 
         .badge {
-            font-size: 0.5rem;
+            font-size: 0.55rem;
             background: var(--accent-color);
             color: #000;
-            padding: 1px 2px;
+            padding: 1px 3px;
             border-radius: 2px;
             margin-top: 1px;
             text-align: center;
@@ -440,7 +445,7 @@
         }
 
         .defeat-msg {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #ddd;
             margin-bottom: 15px;
             text-align: center;
@@ -464,11 +469,11 @@
     </header>
     
     <div class="status-bar">
-        <div class="status-item">Eroe HP<span id="hero-hp" class="status-val">12/12</span></div>
-        <div class="status-item">Nemico HP<span id="enemy-hp" class="status-val">-</span></div>
-        <div class="status-item">Oro<span id="gold-count" class="status-val">0</span></div>
-        <div class="status-item">Reliquie<span id="relic-count" class="status-val">0/4</span></div>
-        <div class="status-item">Sconfitti<span id="defeated-count" class="status-val">0/11</span></div>
+        <div class="status-item">Eroe HP: <span id="hero-hp" class="status-val">12/12</span></div>
+        <div class="status-item">Nemico HP: <span id="enemy-hp" class="status-val">-</span></div>
+        <div class="status-item">Oro: <span id="gold-count" class="status-val">0</span></div>
+        <div class="status-item">Reliquie: <span id="relic-count" class="status-val">0/4</span></div>
+        <div class="status-item">Sconfitti: <span id="defeated-count" class="status-val">0/11</span></div>
     </div>
 
     <div class="board" id="game-board">
@@ -705,7 +710,7 @@
             let canFightManual = (cartaEventoCorrente && cartaEventoCorrente.suit === SUITS.SPADE && !inCombattimento && !fasePostCombattimento);
             document.getElementById('deck-characters').innerHTML = mazzoPersonaggi.length > 0 ? `<div class="card enemy-back ${canFightManual ? 'clickable-enemy-card' : ''}">3. Nemici<br>(${mazzoPersonaggi.length})</div>` : '';
             
-            // Slot Catacomba (Sistemate le carte visibili)
+            // Slot Catacomba
             let catacombHTML = '';
             if (catacomba.length > 0) {
                 catacomba.forEach(c => {
@@ -757,7 +762,7 @@
             });
             document.getElementById('slot-aids').innerHTML = aidHTML;
 
-            // Carte Azione Eroe (Testo del bonus breve: "+1" o "+2")
+            // Carte Azione Eroe
             let heroActHTML = '';
             carteAzioneEroe.forEach((card) => {
                 let isSel = carteSelezionateEroe.includes(card.id);
@@ -779,7 +784,7 @@
             });
             document.getElementById('slot-hero-actions').innerHTML = heroActHTML;
 
-            // Carte Azione Nemico (Rimosse le diciture svelata/usata)
+            // Carte Azione Nemico
             let enemyActHTML = '';
             if (inCombattimento) {
                 carteAzioneNemico.forEach((card, index) => {
@@ -1170,12 +1175,11 @@
 
             carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
             carteSelezionateEroe = [];
-            
-            // Le due carte giocate vanno direttamente e automaticamente nella Pila Eventi
+
             carteEventoPila.push(enemyCardPlayed, ...heroCardsPlayed);
 
             if (checkGameOver()) return;
-            
+
             revealTopEnemyAction();
 
             checkCombatStatus();
@@ -1219,7 +1223,7 @@
             if (enemyHp <= 0) {
                 log(`=== NEMICO SCONFIGGITO! ===`);
                 nemiciSconfittiTotali++;
-                
+
                 if (enemy.value === 10) {
                     let relIndex = mazzoReliquie.findIndex(r => r.suit === enemy.suit);
                     if (relIndex !== -1) {
@@ -1240,12 +1244,12 @@
 
                 inCombattimento = false;
                 enemy = null;
-                
+
                 if (carteAzioneNemico.length > 0) {
                     carteEventoPila.push(...carteAzioneNemico);
                     carteAzioneNemico = [];
                 }
-                
+
                 checkWinCondition();
 
                 fasePostCombattimento = true;
