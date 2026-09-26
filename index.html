@@ -590,7 +590,6 @@
 
             document.getElementById('slot-enemy').innerHTML = enemy ? renderCardHTML(enemy) : '';
 
-            // CASELLA 6. RELIQUIE (Visualizza tutte le reliquie conquistate e permette lo scorrimento)
             let relicsHTML = '';
             reliquieOttenute.forEach(rel => {
                 relicsHTML += renderCardHTML(rel);
@@ -637,7 +636,8 @@
             }
             document.getElementById('slot-enemy-actions').innerHTML = enemyActHTML;
 
-            document.getElementById('btn-discard-action').disabled = carteSelezionateEroe.length === 0;
+            // DISABILITATO DURANTE IL COMBATTIMENTO
+            document.getElementById('btn-discard-action').disabled = inCombattimento || carteSelezionateEroe.length === 0;
 
             if (cartaEventoCorrente && !inCombattimento) {
                 let selectedVal = getSelectedGoldValue();
@@ -705,13 +705,13 @@
                 setDiceEnabled(false);
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
                 let totalGoldAvailable = getTotalGold();
-                setDiceEnabled(false); // Nessun dado per le carte Spade
+                setDiceEnabled(false);
 
                 if (totalGoldAvailable < requiredGold) {
                     log(`Nemico ingaggiato! Nessun oro sufficiente per evitarlo/corromperlo (${totalGoldAvailable}/${requiredGold}). Entra direttamente in combattimento!`);
                     startCombat();
                 } else {
-                    log(`Nemico avvistato! Seleziona Oro per Evitare (${requiredGold}) o Corrompere il nemico.`);
+                    log(`Nemico avvistato! Seleziona Oro per Evitation (${requiredGold}) o Corrompere il nemico.`);
                     document.getElementById('btn-draw').disabled = true;
                 }
             } else {
@@ -886,12 +886,13 @@
         }
 
         function discardSelectedHeroCards() {
-            if (carteSelezionateEroe.length === 0) return;
+            if (inCombattimento || carteSelezionateEroe.length === 0) return;
             let discarded = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
             carteAzioneEroe = carteAzioneEroe.filter(c => !carteSelezionateEroe.includes(c.id));
             carteEventoPila.push(...discarded);
             carteSelezionateEroe = [];
             log(`Scartate ${discarded.length} carte azione Eroe (vanno nella Pila Eventi).`);
+            
             updateUI();
         }
 
