@@ -118,7 +118,6 @@
             background: transparent;
         }
 
-        /* Slot specifico per il dado senza bordi o sfondi grigi */
         .slot-dice {
             border: none !important;
             background: transparent !important;
@@ -225,6 +224,24 @@
             to { box-shadow: 0 0 12px #ffd700; }
         }
 
+        /* EVIDENZIATORE DEDICATO PER EVENTO DENARI */
+        .gold-drawable {
+            cursor: pointer;
+            border-color: #ffd700 !important;
+            animation: pulse-glow-gold 1.2s infinite alternate;
+        }
+
+        @keyframes pulse-glow-gold {
+            from { 
+                box-shadow: 0 0 4px #ffd700, 0 0 8px #ffb700; 
+                transform: scale(1);
+            }
+            to { 
+                box-shadow: 0 0 14px #ffd700, 0 0 22px #ff8c00; 
+                transform: scale(1.05);
+            }
+        }
+
         .card-val { font-size: 0.75rem; line-height: 1; }
         .card-suit { font-size: 0.48rem; align-self: flex-end; text-transform: capitalize; }
 
@@ -242,7 +259,6 @@
 
         .span-2 { grid-column: span 2; }
 
-        /* SEZIONE DADO - BORDI GRIGI RIMOSSI */
         .dice-slot {
             display: flex;
             flex-direction: column;
@@ -288,14 +304,12 @@
             color: #111111 !important;
         }
 
-        /* DADO VERDE SE SUCCESSO */
         .dice-box.success {
             background-color: var(--dice-success) !important;
             color: #000000 !important;
             box-shadow: 0 0 18px var(--dice-success), 0 4px 12px rgba(0,0,0,0.7) !important;
         }
 
-        /* DADO ROSSO SE FALLITO */
         .dice-box.fail {
             background-color: var(--dice-fail) !important;
             color: #ffffff !important;
@@ -435,7 +449,6 @@
         <div class="slot"><span class="slot-title">8. Oro</span><div id="slot-gold" class="card-container"></div></div>
         <div class="slot"><span class="slot-title">9. Aiuti</span><div id="slot-aids" class="card-container"></div></div>
         
-        <!-- DADO (SENZA BORDO GRIGIO) -->
         <div class="slot slot-dice">
             <div id="dice-container" class="dice-slot disabled" onclick="rollDiceTest()">
                 <div id="dice-box" class="dice-box">⚀</div>
@@ -633,15 +646,18 @@
             // Carta Evento
             let topEventCard = cartaEventoCorrente || (carteEventoPila.length > 0 ? carteEventoPila[carteEventoPila.length - 1] : null);
             let eventClickFn = '';
+            let extraCardClass = '';
+
             if (cartaEventoCorrente) {
                 if (cartaEventoCorrente.suit === SUITS.DENARI) {
                     eventClickFn = 'collectDenariEvent()';
+                    extraCardClass = 'gold-drawable'; // Applica la classe per l'animazione pulsante oro
                 } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
                     eventClickFn = 'handleSpadeEventClick()';
                 }
             }
             document.getElementById('card-event').innerHTML = topEventCard 
-                ? renderCardHTML(topEventCard, `x${carteEventoPila.length + (cartaEventoCorrente ? 1 : 0)}`, false, eventClickFn, '') 
+                ? renderCardHTML(topEventCard, `x${carteEventoPila.length + (cartaEventoCorrente ? 1 : 0)}`, false, eventClickFn, '', extraCardClass) 
                 : '';
 
             // Mazzo Nemici
@@ -734,10 +750,10 @@
             }
         }
 
-        function renderCardHTML(card, badge = '', isSelected = false, clickFn = '', extraHTML = '') {
+        function renderCardHTML(card, badge = '', isSelected = false, clickFn = '', extraHTML = '', extraClass = '') {
             if (!card) return '';
             return `
-                <div class="card ${isSelected ? 'selected' : ''}" onclick="${clickFn}">
+                <div class="card ${isSelected ? 'selected' : ''} ${extraClass}" onclick="${clickFn}">
                     <div class="card-val">${card.value}</div>
                     <div class="card-suit">${card.suit}</div>
                     ${badge ? `<div class="badge">${badge}</div>` : ''}
@@ -850,7 +866,7 @@
                 : cartaEventoCorrente.value;
 
             if (cartaEventoCorrente.suit === SUITS.DENARI) {
-                log(`Trovata Carta Oro! Tocca la carta Denari negli Eventi per portarla nell'Oro.`);
+                log(`Trovata Carta Oro! Tocca la carta Denari lampeggiante negli Eventi per portarla nell'Oro.`);
                 canDrawEvent = false;
                 setDiceEnabled(false);
             } else if (cartaEventoCorrente.suit === SUITS.SPADE) {
@@ -880,7 +896,6 @@
             }
         }
 
-        /* FUNZIONE DADO CON EFFETTI DI SUCCESSO E FALLIMENTO */
         function rollDiceTest() {
             if (!diceEnabled || isRollingDice) return;
 
