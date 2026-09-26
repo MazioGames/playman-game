@@ -91,11 +91,12 @@
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(4, 1fr);
             gap: 3px;
-            height: 61vh;
+            height: 59vh;
             background: #2b221b;
             padding: 4px;
             border-radius: 8px;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+            position: relative;
         }
 
         .slot {
@@ -130,19 +131,30 @@
 
         .card-container {
             display: flex;
-            gap: 2px;
+            gap: 3px;
             width: 100%;
             height: 100%;
             align-items: center;
-            justify-content: center;
-            padding-top: 6px;
+            justify-content: flex-start;
+            padding-top: 8px;
+            padding-left: 2px;
+            padding-right: 2px;
             overflow-x: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* Personalizzazione Scrollbar Carte Oro / Aiuti */
+        .card-container::-webkit-scrollbar {
+            height: 3px;
+        }
+        .card-container::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 2px;
         }
 
         .card {
-            width: 100%;
-            height: 85%;
-            max-width: 50px;
+            width: 44px;
+            height: 82%;
             background-color: var(--card-bg);
             color: var(--text-color);
             border-radius: 4px;
@@ -172,6 +184,7 @@
             align-items: center;
             font-size: 0.55rem;
             text-align: center;
+            width: 100%;
         }
 
         .card.enemy-back {
@@ -182,6 +195,7 @@
             align-items: center;
             font-size: 0.55rem;
             text-align: center;
+            width: 100%;
         }
 
         .card-val { font-size: 0.75rem; line-height: 1; }
@@ -190,7 +204,7 @@
         .span-2 { grid-column: span 2; }
 
         .controls {
-            height: 13vh;
+            height: 15vh;
             display: flex;
             flex-direction: column;
             gap: 3px;
@@ -200,10 +214,12 @@
             display: flex;
             gap: 3px;
             height: 48%;
+            align-items: center;
         }
 
         button {
             flex: 1;
+            height: 100%;
             background-color: var(--primary-color);
             color: white;
             border: 1px solid var(--accent-color);
@@ -221,8 +237,32 @@
             opacity: 0.6;
         }
 
+        /* Area Dado Grafico */
+        .dice-display {
+            width: 42px;
+            height: 100%;
+            background: #120e0c;
+            border: 1px solid var(--accent-color);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            line-height: 1;
+            color: var(--accent-color);
+            flex-shrink: 0;
+            box-shadow: inset 0 0 4px #000;
+        }
+
+        .dice-label {
+            font-size: 0.4rem;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+
         #log {
-            height: 13vh;
+            height: 11vh;
             background: #120e0c;
             border: 1px solid #5c4d3c;
             border-radius: 4px;
@@ -243,6 +283,46 @@
             margin-top: 1px;
             text-align: center;
         }
+
+        /* Overlay di Sconfitta */
+        .defeat-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.88);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .defeat-title {
+            font-size: 1.8rem;
+            color: #ff3333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff0000;
+            margin-bottom: 8px;
+        }
+
+        .defeat-msg {
+            font-size: 0.8rem;
+            color: #ddd;
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -260,7 +340,7 @@
         <div class="status-item">Sconfitti<span id="defeated-count" class="status-val">0/11</span></div>
     </div>
 
-    <div class="board">
+    <div class="board" id="game-board">
         <!-- RIGA 1 -->
         <div class="slot"><span class="slot-title">1. Dungeon</span><div id="deck-dungeon" class="card-container"></div></div>
         <div class="slot"><span class="slot-title">2. Evento</span><div id="card-event" class="card-container"></div></div>
@@ -282,12 +362,26 @@
         <div class="slot"><span class="slot-title">9. Aiuti</span><div id="slot-aids" class="card-container"></div></div>
         <div class="slot empty"></div>
         <div class="slot"><span class="slot-title">10. Mazzo Reliquie</span><div id="deck-relics" class="card-container"></div></div>
+        
+        <!-- Overlay Sconfitta Dynamico -->
+        <div id="defeat-overlay" class="defeat-overlay" style="display: none;">
+            <div class="defeat-title">☠ SCONFITTA ☠</div>
+            <div class="defeat-msg">Il tuo Eroe è caduto nel Dungeon!</div>
+            <button onclick="initGame()" style="flex: none; padding: 8px 16px; font-size: 0.8rem;">Inizia Nuova Partita</button>
+        </div>
     </div>
 
     <div class="controls">
         <div class="btn-group">
             <button id="btn-draw" onclick="drawEvent()">Pesca Evento</button>
             <button id="btn-roll" onclick="rollDiceTest()" disabled>Lancia 1D6</button>
+            
+            <!-- Box Grafico Dado Spazio Libero -->
+            <div class="dice-display">
+                <span class="dice-label">Dado</span>
+                <span id="dice-result">-</span>
+            </div>
+
             <button id="btn-pay-gold" onclick="paySelectedGold(false)" disabled>Evita (Oro)</button>
             <button id="btn-corrupt" onclick="paySelectedGold(true)" disabled>Corrompi</button>
         </div>
@@ -302,6 +396,7 @@
 
     <script>
         const SUITS = { BASTONI: 'Bastoni', COPPE: 'Coppe', DENARI: 'Denari', SPADE: 'Spade' };
+        const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅']; // Faccette del dado Unicode
         
         let hero = { hp: 12, maxHp: 12, card: null };
         let enemy = null;
@@ -379,7 +474,9 @@
         }
 
         function initGame() {
+            document.getElementById('defeat-overlay').style.display = 'none';
             document.getElementById('log').innerHTML = '';
+            document.getElementById('dice-result').innerText = '-';
             log(`Nuova partita iniziata (${mode})...`);
 
             let fullDeck = createDeck();
@@ -426,7 +523,7 @@
         }
 
         function updateUI() {
-            document.getElementById('hero-hp').innerText = `${hero.hp}/12`;
+            document.getElementById('hero-hp').innerText = `${Math.max(0, hero.hp)}/12`;
             document.getElementById('enemy-hp').innerText = enemy ? `${enemyHp}/${enemyMaxHp}` : '-';
             document.getElementById('gold-count').innerText = getTotalGold();
             document.getElementById('relic-count').innerText = `${reliquieOttenute.length}/4`;
@@ -442,7 +539,7 @@
             document.getElementById('slot-hero').innerHTML = renderCardHTML(hero.card);
             document.getElementById('deck-relics').innerHTML = mazzoReliquie.length > 0 ? `<div class="card back">10. Reliquie<br>(${mazzoReliquie.length})</div>` : '';
 
-            // Slot Oro con possibilità di selezione singola carta
+            // Slot Oro con scorrimento ed elementi selezionabili
             let goldHTML = '';
             carteOro.forEach(card => {
                 let isSel = carteOroSelezionate.includes(card.id);
@@ -450,7 +547,7 @@
             });
             document.getElementById('slot-gold').innerHTML = goldHTML;
 
-            // Slot Aiuti con selezione singola/multipla
+            // Slot Aiuti
             let aidHTML = '';
             carteAiuto.forEach(card => {
                 let isSel = carteAiutoSelezionate.includes(card.id);
@@ -458,7 +555,7 @@
             });
             document.getElementById('slot-aids').innerHTML = aidHTML;
 
-            // Render Azioni Eroe
+            // Carte Azione Eroe
             let heroActHTML = '';
             carteAzioneEroe.forEach((card) => {
                 let isSel = carteSelezionateEroe.includes(card.id);
@@ -466,7 +563,7 @@
             });
             document.getElementById('slot-hero-actions').innerHTML = heroActHTML;
 
-            // Render Azioni Nemico
+            // Carte Azione Nemico
             let enemyActHTML = '';
             carteAzioneNemico.forEach((card, idx) => {
                 if (idx === carteAzioneNemico.length - 1) {
@@ -479,7 +576,6 @@
 
             document.getElementById('btn-discard-action').disabled = carteSelezionateEroe.length === 0;
 
-            // Aggiornamento stato pulsanti Oro se carta evento attiva
             if (cartaEventoCorrente && !inCombattimento) {
                 let selectedVal = getSelectedGoldValue();
                 let requiredGold = (mode === 'Difficile' && cartaEventoCorrente.suit === SUITS.SPADE) 
@@ -551,7 +647,8 @@
 
         function rollDiceTest() {
             let roll = Math.floor(Math.random() * 6) + 1;
-            log(`Lancio 1D6: ${roll}`);
+            document.getElementById('dice-result').innerText = DICE_FACES[roll - 1]; // Visualizza Dado Grafico
+            log(`Lancio 1D6: ${roll} ${DICE_FACES[roll - 1]}`);
 
             let vce = cartaEventoCorrente.value;
             let success = (roll === 6 || (roll !== 1 && roll >= vce));
@@ -577,7 +674,7 @@
                 }
             }
 
-            checkGameOver();
+            if (checkGameOver()) return;
             endTurn(true);
         }
 
@@ -588,7 +685,6 @@
 
             if (paidValue < requiredGold || (isCorruption && paidValue <= requiredGold)) return;
 
-            // Spostiamo le carte oro selezionate nella Catacomba
             let selectedCards = carteOro.filter(c => carteOroSelezionate.includes(c.id));
             carteOro = carteOro.filter(c => !carteOroSelezionate.includes(c.id));
             catacomba.push(...selectedCards);
@@ -716,13 +812,11 @@
             
             let relicBonus = reliquieOttenute.filter(r => r.suit === chosenSuit).length;
             
-            // Calcolo Bonus Carte Aiuto Selezionate
             let selectedAids = carteAiuto.filter(a => carteAiutoSelezionate.includes(a.id));
             let matchingAids = selectedAids.filter(a => a.suit === chosenSuit);
             let aidBonus = matchingAids.length;
 
             if (aidBonus > 0) {
-                // Rimuoviamo le carte aiuto usate e le mandiamo nella catacomba
                 carteAiuto = carteAiuto.filter(a => !matchingAids.map(m => m.id).includes(a.id));
                 catacomba.push(...matchingAids);
                 log(`Usate ${aidBonus} Carte Aiuto di ${chosenSuit} (+${aidBonus})!`);
@@ -742,12 +836,11 @@
             carteSelezionateEroe = [];
             catacomba.push(enemyCardPlayed, ...heroCardsPlayed);
 
-            checkGameOver();
+            if (checkGameOver()) return;
             checkCombatStatus();
         }
 
         function resolveCombatExchange(hSuit, hVal, eSuit, eVal) {
-            // Parata (Bastoni vs Bastoni)
             if (hSuit === SUITS.BASTONI && eSuit === SUITS.BASTONI) {
                 let diff = hVal - eVal;
                 if (diff > 0) {
@@ -762,18 +855,15 @@
                 return;
             }
 
-            // Attacco del Nemico
             if (eSuit === SUITS.SPADE) {
                 let damage = Math.max(0, eVal - (hSuit === SUITS.DENARI ? hVal : 0));
                 hero.hp -= damage;
                 log(`L'attacco del Nemico ti infligge ${damage} danni.`);
             } else if (eSuit === SUITS.COPPE) {
-                // Il nemico non può superare il suo HP massimo
                 enemyHp = Math.min(enemyMaxHp, enemyHp + eVal);
                 log(`Il Nemico usa Coppe e si cura. HP Nemico: ${enemyHp}/${enemyMaxHp}`);
             }
 
-            // Attacco dell'Eroe (Spade o Bastoni infliggono danni)
             if (hSuit === SUITS.SPADE || hSuit === SUITS.BASTONI) {
                 let damage = Math.max(0, hVal - (eSuit === SUITS.DENARI ? eVal : 0));
                 enemyHp = Math.max(0, enemyHp - damage);
@@ -825,13 +915,18 @@
 
         function checkGameOver() {
             if (hero.hp <= 0) {
-                log('☠ GAME OVER! Il tuo eroe è caduto.');
+                hero.hp = 0;
+                updateUI();
+                log('☠ SCONFITTA! Il tuo eroe è caduto.');
+                document.getElementById('defeat-overlay').style.display = 'flex';
                 document.getElementById('btn-draw').disabled = true;
                 document.getElementById('btn-roll').disabled = true;
                 document.getElementById('btn-pay-gold').disabled = true;
                 document.getElementById('btn-corrupt').disabled = true;
                 document.getElementById('btn-play-action').disabled = true;
+                return true;
             }
+            return false;
         }
 
         function checkWinCondition() {
