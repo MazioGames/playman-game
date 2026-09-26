@@ -773,11 +773,17 @@
             let enemyActHTML = '';
             if (inCombattimento) {
                 carteAzioneNemico.forEach((card, index) => {
-                    if (index === carteAzioneNemico.length - 1) {
-                        let isClickable = carteSelezionateEroe.length > 0 ? 'clickable-enemy-card' : '';
-                        enemyActHTML += `<div class="card enemy-back ${isClickable}" onclick="handleEnemyCardClick()">Nemico</div>`;
+                    let isTopTargetCard = (index === carteAzioneNemico.length - 1);
+                    let isClickableClass = (isTopTargetCard && carteSelezionateEroe.length > 0) ? 'clickable-enemy-card' : '';
+
+                    if (card.revealed) {
+                        enemyActHTML += renderCardHTML(card, 'Svelata', false, isTopTargetCard ? 'handleEnemyCardClick()' : '', '', isClickableClass);
                     } else {
-                        enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
+                        if (isTopTargetCard) {
+                            enemyActHTML += `<div class="card enemy-back ${isClickableClass}" onclick="handleEnemyCardClick()">Nemico</div>`;
+                        } else {
+                            enemyActHTML += `<div class="card enemy-back">Nemico</div>`;
+                        }
                     }
                 });
                 
@@ -864,7 +870,7 @@
                 }
 
                 let candidateEnemy = mazzoPersonaggi.pop();
-                log(`Corruzione diretta su: ${candidateEnemy.value} di ${candidateEnemy.suit}...`);
+                log(`Corruzione directa su: ${candidateEnemy.value} di ${candidateEnemy.suit}...`);
 
                 if (candidateEnemy.value === 8 || candidateEnemy.value === 9) {
                     carteAiuto.push(candidateEnemy);
@@ -1043,12 +1049,20 @@
             carteAzioneNemico = [];
             for (let i = 0; i < 3; i++) {
                 if (!checkAndReplenishDungeonDeck()) break;
-                carteAzioneNemico.push(mazzoDungeon.pop());
+                let c = mazzoDungeon.pop();
+                c.revealed = false;
+                carteAzioneNemico.push(c);
+            }
+
+            // Svela la terza carta azione del nemico (quella in cima alla pila, indice 2)
+            if (carteAzioneNemico.length >= 3) {
+                carteAzioneNemico[2].revealed = true;
+                log(`La 3ª Carta Azione del Nemico è svelata: ${carteAzioneNemico[2].value} di ${carteAzioneNemico[2].suit}!`);
             }
 
             ultimaAzioneNemicoGiocata = null;
             carteSelezionateEroe = [];
-            log('Seleziona la tua Carta Azione Eroe, poi tocca la Carta Nemico coperta per giocare!');
+            log('Seleziona la tua Carta Azione Eroe, poi tocca la Carta Nemico per giocare!');
             updateUI();
         }
 
@@ -1117,6 +1131,7 @@
 
             let heroCardsPlayed = carteAzioneEroe.filter(c => carteSelezionateEroe.includes(c.id));
             let enemyCardPlayed = carteAzioneNemico.pop();
+            delete enemyCardPlayed.revealed;
             ultimaAzioneNemicoGiocata = enemyCardPlayed;
 
             let chosenSuit = heroCardsPlayed[0].suit;
