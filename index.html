@@ -13,6 +13,9 @@
             --accent-color: #d9a05b;
             --selected-border: #00e676;
             --enemy-color: #801818;
+            --hero-dice-bg: #00bcd4;
+            --hero-dice-text: #002233;
+            --hero-dice-border: #80deea;
             --dice-success: #00e676;
             --dice-fail: #ff3333;
         }
@@ -182,8 +185,6 @@
         .hp-dice {
             width: 20px;
             height: 20px;
-            background: #ffffff;
-            color: #111;
             border-radius: 4px;
             display: flex;
             align-items: center;
@@ -191,14 +192,19 @@
             font-size: 1rem;
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.6);
-            border: 1px solid #d9a05b;
             cursor: pointer;
+        }
+
+        .hp-dice.hero-dice {
+            background: var(--hero-dice-bg);
+            color: var(--hero-dice-text);
+            border: 1px solid var(--hero-dice-border);
         }
 
         .hp-dice.enemy-dice {
             background: #801818;
             color: #ffffff;
-            border-color: #ff8888;
+            border: 1px solid #ff8888;
         }
 
         .card-container::-webkit-scrollbar {
@@ -717,14 +723,14 @@
             });
             document.getElementById('slot-relics').innerHTML = relicsHTML;
 
-            // Slot Eroe
+            // Slot Eroe (Dadi Azzurri)
             let currentHeroHp = Math.max(0, hero.hp);
             let d1 = Math.min(6, currentHeroHp);
             let d2 = Math.max(0, currentHeroHp - 6);
             let heroDiceHTML = `
                 <div class="hp-dice-group">
-                    <div class="hp-dice">${DICE_FACES[d1 > 0 ? d1 - 1 : 0]}</div>
-                    ${d2 > 0 ? `<div class="hp-dice">${DICE_FACES[d2 - 1]}</div>` : ''}
+                    <div class="hp-dice hero-dice">${DICE_FACES[d1 > 0 ? d1 - 1 : 0]}</div>
+                    ${d2 > 0 ? `<div class="hp-dice hero-dice">${DICE_FACES[d2 - 1]}</div>` : ''}
                 </div>`;
             document.getElementById('slot-hero').innerHTML = heroDiceHTML + renderCardHTML(hero.card);
 
@@ -1081,7 +1087,6 @@
                 carteAzioneNemico.push(c);
             }
 
-            // Svela SOLO la prima carta azione in cima
             revealTopEnemyAction();
 
             ultimaAzioneNemicoGiocata = null;
@@ -1174,7 +1179,6 @@
 
             if (checkGameOver()) return;
             
-            // Svela la carta successiva del nemico, se ce n'è una
             revealTopEnemyAction();
 
             checkCombatStatus();
